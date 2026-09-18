@@ -94,10 +94,12 @@ BioShield/
 │   ├── chunking.py           # Section-aware and page-aware chunking
 │   ├── embeddings.py         # Sentence-transformer embedding wrapper
 │   ├── retriever.py          # Vector retrieval, scoring & evidence evaluation
-│   ├── llm.py                # IBM Granite inference client
-│   ├── prompts.py            # Grounded advisory prompts
+│   ├── llm.py                # IBM Granite inference client (BaseLLM, FakeLLM, GraniteLLM)
+│   ├── prompts.py            # Grounded advisory prompts with XML delimiters & schema
+│   ├── advisory_schema.py    # Structured advisory JSON schema & resilient parser
 │   ├── ingest.py             # Idempotent document ingestion pipeline
-│   └── rag_pipeline.py       # End-to-end RAG workflow & safe fallback
+│   ├── rag_pipeline.py       # End-to-end RAG workflow, gating & source verification
+│   └── rag.py                # Public entrypoint exporting answer_query & schemas
 └── tests/
     ├── test_config.py        # Environment & directory configuration tests
     ├── test_document_catalog.py # Corpus metadata & isolation tests
@@ -105,8 +107,12 @@ BioShield/
     ├── test_pdf_extraction.py # PDF extraction & error handling tests
     ├── test_ingest.py        # ChromaDB persistence & idempotency tests
     ├── test_retriever.py     # Source metadata, ranking & threshold tests
+    ├── test_prompts.py       # Strict grounding rules & XML delimiter tests
+    ├── test_llm.py           # Granite LLM client interface & error handling tests
+    ├── test_advisory_schema.py # Structured output parsing & fallback tests
     ├── test_pipeline.py      # Evidence sufficiency & safe fallback tests
-    └── test_e2e_retrieval.py # End-to-end knowledge base retrieval tests
+    ├── test_e2e_retrieval.py # End-to-end knowledge base retrieval tests
+    └── test_rag_integration.py # Live ChromaDB + Granite grounded RAG integration tests
 ```
 
 ---
@@ -180,23 +186,75 @@ This will:
 - Compute embeddings via `sentence-transformers/all-MiniLM-L6-v2`
 - Persist vectors into local `chroma_db/` idempotently (rerunning will add 0 duplicate chunks)
 
-### 2. Run Automated Tests
+### 2. Query via Python API (`src.rag`)
+
+```python
+from src.rag import answer_query
+
+# Query the grounded pipeline
+result = answer_query("How can I control stem borers in paddy using natural farming?")
+
+if result.evidence_status == "INSUFFICIENT_EVIDENCE":
+    print("Insufficient evidence:", result.get("message"))
+else:
+    print("Possible Issue:", result.get("possible_issue"))
+    print("Confidence:", result.get("confidence"))
+    print("Evidence-Based Practices:")
+    for practice in result.get("evidence_based_practices", []):
+        print(f" - {practice}")
+    print("Verified Sources:")
+    for src in result.get("sources", []):
+        print(f" - {src['title']} (p. {src['page']}, {src['section']})")
+```
+
+### 3. Structured Advisory Format
+
+When evidence is sufficient, the output strictly adheres to:
+```json
+{
+  "possible_issue": "Target pest/disease description based strictly on context",
+  "evidence_based_practices": ["Natural preparation / botanical spray / cultural control"],
+  "why_relevant": "Explanation of mechanism grounded in the retrieved text",
+  "precautions": ["Safety guidelines, dosage instructions if mentioned, or handling notes"],
+  "sources": [
+    {
+      "title": "Field_Guide_for_Natural_Farming.pdf",
+      "page": 42,
+      "section": "Pest Management Protocols"
+    }
+  ],
+  "confidence": "High | Medium | Low",
+  "limitations": "Prototype advisory notice with recommendation to consult KVK / local extension officers"
+}
+```
+
+If evidence distance exceeds `SIMILARITY_THRESHOLD`, Granite is **not invoked**, immediately returning:
+```json
+{
+  "status": "INSUFFICIENT_EVIDENCE",
+  "message": "No sufficiently verified natural farming practice was found in the core knowledge base for your inquiry. Please consult your local Krishi Vigyan Kendra (KVK) or agricultural extension officer for safe recommendations.",
+  "sources": [],
+  "confidence": "Low"
+}
+```
+
+### 4. Run Automated Tests
 
 Execute the complete test suite:
 
 ```bash
-pytest
-# or
-python -m pytest -v
+pytest -v
 ```
 
-All 22 unit, integration, and end-to-end tests will execute.
-
-### 3. Launch the Streamlit Web UI
-
-```bash
-streamlit run app.py
-
+All 36 unit, integration, schema, and end-to-end tests will execute across:
+- Configuration and document catalog isolation
+- PDF extraction and chunking
+- ChromaDB persistence and idempotency
+- Vector similarity scoring and evidence threshold gating
+- System prompts, grounding rules, and XML delimiter boundaries
+- IBM Granite LLM inference, timeouts, and auth headers
+- Structured advisory JSON schema validation and resilient fallback parsing
+- Grounded RAG integration pipeline with source verification
 
 ---
 
@@ -213,3 +271,4 @@ streamlit run app.py
 ## 9. License
 
 Developed for the **1M1B AI for Sustainability Virtual Internship** in collaboration with **IBM SkillsBuild** and **AICTE**. Distributed under the Apache 2.0 License.
+
