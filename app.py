@@ -1,67 +1,82 @@
 """BioShield AI — Natural Farming Pest Advisory Assistant.
 
-Streamlit Demonstration UI for document-grounded agricultural decision support.
+Streamlit Demonstration UI for responsible, document-grounded agricultural decision support.
 """
 
-import streamlit as st
-from src import config
-from src.rag_pipeline import SAFE_FALLBACK, answer_query
-from src.retriever import ChromaRetriever
+from typing import Any, Dict
 
+import streamlit as st
+
+from src import config
+from src.rag import answer_query
+from src.ui_helpers import (
+    EXAMPLE_QUERIES,
+    check_kb_status,
+    format_error_message,
+)
+
+# Page configuration
 st.set_page_config(
     page_title="BioShield AI — Natural Farming Pest Advisory Assistant",
-    page_icon="🌿",
+    page_icon="🌱",
     layout="wide",
 )
 
-# Custom CSS for polished aesthetics
+# Clean, professional agricultural theme styling
 st.markdown(
     """
     <style>
     .main-title {
-        font-size: 2.3rem;
+        font-size: 2.2rem;
         font-weight: 700;
-        color: #1e4620;
-        margin-bottom: 0.2rem;
+        color: #1b4d24;
+        margin-bottom: 0.1rem;
     }
-    .subtitle {
+    .main-subtitle {
         font-size: 1.15rem;
         font-weight: 500;
         color: #2e7d32;
+        margin-bottom: 0.8rem;
+    }
+    .intro-box {
+        font-size: 1.0rem;
+        color: #2c3e50;
+        line-height: 1.5;
         margin-bottom: 1rem;
     }
-    .sdg-badge {
+    .confidence-badge-high {
         display: inline-block;
         background-color: #e8f5e9;
-        border: 1px solid #81c784;
-        border-radius: 6px;
-        padding: 0.35rem 0.65rem;
-        margin-bottom: 0.5rem;
-        font-size: 0.85rem;
-        font-weight: 600;
         color: #1b5e20;
-    }
-    .advisory-box {
-        background-color: #f9fbf9;
-        border-left: 5px solid #2e7d32;
+        padding: 0.25rem 0.6rem;
         border-radius: 4px;
-        padding: 1.25rem;
-        margin-top: 1rem;
+        font-weight: 700;
+        font-size: 0.9rem;
     }
-    .evidence-card {
-        background-color: #ffffff;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        padding: 0.8rem;
-        margin-bottom: 0.6rem;
+    .confidence-badge-med {
+        display: inline-block;
+        background-color: #fff8e1;
+        color: #b78103;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.9rem;
     }
-    .status-badge-ok {
-        color: #2e7d32;
-        font-weight: bold;
+    .confidence-badge-low {
+        display: inline-block;
+        background-color: #ffebee;
+        color: #c62828;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.9rem;
     }
-    .status-badge-warn {
-        color: #e65100;
-        font-weight: bold;
+    .practice-card {
+        background-color: #f6fbf7;
+        border-left: 4px solid #388e3c;
+        border-radius: 4px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
     }
     </style>
     """,
@@ -69,220 +84,276 @@ st.markdown(
 )
 
 
-def get_kb_stats():
-    """Retrieve indexed document count from ChromaDB."""
-    try:
-        retriever = ChromaRetriever()
-        coll = retriever._get_collection()
-        if coll is not None:
-            return coll.count()
-    except Exception:
-        pass
-    return 0
+def load_example(preset_name: str) -> None:
+    """Callback to populate input fields from the selected demo preset."""
+    if preset_name in EXAMPLE_QUERIES:
+        preset = EXAMPLE_QUERIES[preset_name]
+        st.session_state["crop_field"] = preset["crop"]
+        st.session_state["problem_field"] = preset["problem"]
+        st.session_state["approach_field"] = preset["approach"]
+        st.session_state["question_field"] = preset["question"]
 
 
-# Sidebar content
+# Initialize session state keys for the inputs
+for field_key, default_val in [
+    ("crop_field", ""),
+    ("problem_field", ""),
+    ("approach_field", "Natural farming"),
+    ("question_field", ""),
+]:
+    if field_key not in st.session_state:
+        st.session_state[field_key] = default_val
+
+
+# -----------------------------------------------------------------------------
+# Sidebar: Responsible AI & System Health
+# -----------------------------------------------------------------------------
 with st.sidebar:
-    st.image("https://img.icons8.com/color/96/natural-food.png", width=64)
-    st.title("BioShield AI")
-    st.markdown("**Program:** 1M1B AI for Sustainability Virtual Internship (IBM SkillsBuild & AICTE)")
-
-    st.markdown("---")
-    st.subheader("Global SDG Alignment")
+    st.header("🛡️ Responsible AI")
     st.markdown(
         """
-        <div class="sdg-badge">🌱 SDG 15 — Life on Land</div><br>
-        <small>Promoting natural biological management to preserve soil vitality, beneficial insects, and terrestrial ecosystems.</small>
-        <br><br>
-        <div class="sdg-badge">♻️ SDG 12 — Responsible Consumption</div><br>
-        <small>Fostering safe, low-chemical input practices in sustainable agricultural production.</small>
-        """,
-        unsafe_allow_html=True,
-    )
+        BioShield AI is governed by strict agricultural AI safety principles:
 
-    st.markdown("---")
-    st.subheader("System Architecture")
-    st.markdown(
-        """
-        - **Embedding**: `sentence-transformers`
-        - **Vector DB**: `ChromaDB` (Local)
-        - **Inference**: `IBM Granite`
-        - **Pipeline**: Simple Grounded RAG
+        - **Grounded in curated agricultural sources:** Answers are retrieved strictly from verified extension manuals.
+        - **Source attribution:** Verifiable document, page, and section citations from retrieval metadata.
+        - **Uncertainty disclosure:** Transparent confidence scoring and explicit limitations disclosure.
+        - **No guaranteed diagnosis:** Recommends potential causes rather than definitive assertions.
+        - **No fabricated agricultural facts:** Zero tolerance for hallucinated remedies or preparation steps.
+        - **No unsupported application rates:** Strictly refuses to invent chemical recipes or unverified dosages.
+        - **Human expert verification for ambiguous cases:** Always advises consultation with local Krishi Vigyan Kendra (KVK) or extension officers.
         """
     )
 
     st.markdown("---")
-    st.subheader("System Health")
-    kb_count = get_kb_stats()
-    if kb_count > 0:
-        st.markdown(f"📚 Knowledge Base: <span class='status-badge-ok'>{kb_count} Chunks Indexed</span>", unsafe_allow_html=True)
+    st.subheader("System Status")
+    kb_available, kb_count, kb_msg = check_kb_status()
+    if kb_available:
+        st.success(f"📚 Knowledge Base: {kb_count} Chunks Indexed")
     else:
-        st.markdown("📚 Knowledge Base: <span class='status-badge-warn'>Empty (Run ingestion)</span>", unsafe_allow_html=True)
-        st.caption("Run: `python -m src.ingest` in terminal to populate.")
+        st.warning(f"📚 Knowledge Base: {kb_msg}")
+        st.caption("Run `python ingest.py` in your terminal to index the core manuals.")
 
     if config.GRANITE_BASE_URL:
-        st.markdown(f"🤖 LLM Model: <span class='status-badge-ok'>{config.GRANITE_MODEL}</span>", unsafe_allow_html=True)
+        st.info(f"🤖 Granite Model: `{config.GRANITE_MODEL}`")
     else:
-        st.markdown("🤖 LLM Model: <span class='status-badge-warn'>Endpoint Not Set</span>", unsafe_allow_html=True)
-        st.caption("Configure `GRANITE_BASE_URL` in `.env` or use local Ollama.")
-
-    st.markdown("---")
-    st.markdown(
-        "**Responsible AI Notice:**\n"
-        "BioShield AI is strictly grounded in verified agricultural extension manuals. "
-        "It will refuse to invent unverified dosages, chemical formulas, or guaranteed cures."
-    )
+        st.warning("🤖 Granite Endpoint: Not Configured in `.env`")
 
 
-# Main layout
+# -----------------------------------------------------------------------------
+# Main Header & Prominent Disclaimer
+# -----------------------------------------------------------------------------
 st.markdown("<div class='main-title'>BioShield AI</div>", unsafe_allow_html=True)
 st.markdown(
-    "<div class='subtitle'>Natural Farming Pest Advisory Assistant — Grounded Decision Support</div>",
+    "<div class='main-subtitle'>Natural Farming Pest Advisory Assistant</div>",
     unsafe_allow_html=True,
 )
+
 st.markdown(
-    "Ask about sustainable, biological, and natural pest-management practices. "
-    "Advisories are retrieved directly from verified agricultural documentation and are **not** a substitute for professional agricultural diagnosis."
+    "<div class='intro-box'>"
+    "BioShield AI retrieves verified natural-farming and sustainable pest-management guidance "
+    "from a curated agricultural knowledge base and uses IBM Granite to explain the evidence in simple language."
+    "</div>",
+    unsafe_allow_html=True,
+)
+
+st.warning(
+    "⚠️ **Important Disclaimer:** BioShield AI is an agricultural information and decision-support prototype, "
+    "not an autonomous agricultural diagnosis or treatment system. Recommendations should be verified with "
+    "a qualified agricultural expert, especially for severe, ambiguous, or unfamiliar crop problems."
 )
 
 st.markdown("---")
 
-# Quick example selector
-example_selected = st.selectbox(
-    "💡 Or choose a sample inquiry:",
-    [
-        "Custom Input",
-        "Pigeon Pea: Pod borer sustainable biological management (Supported in KB)",
-        "Rice: Brown planthopper control (Absent from current KB - Tests safe fallback)",
-        "Cotton: Leaves turning yellow (Ambiguous symptom - Tests safety refusal)",
-    ],
-)
 
-default_crop = ""
-default_problem = ""
-default_query = ""
-default_pref = "Natural / Biological pest management"
+# -----------------------------------------------------------------------------
+# Demo Mode: Example Queries
+# -----------------------------------------------------------------------------
+st.subheader("💡 Example Queries")
+st.caption("Click any preset below to populate the input fields with supported or test inquiries:")
 
-if example_selected == "Pigeon Pea: Pod borer sustainable biological management (Supported in KB)":
-    default_crop = "Pigeon pea"
-    default_problem = "I am seeing pod borer damage and larvae entering the pods."
-    default_query = "What sustainable biological practices and cultural controls can I consider?"
-    default_pref = "Natural / Biological pest management"
-elif example_selected == "Rice: Brown planthopper control (Absent from current KB - Tests safe fallback)":
-    default_crop = "Rice"
-    default_problem = "Brown planthopper hopper burn symptoms on leaves."
-    default_query = "What bio-pesticide dosage can I apply?"
-    default_pref = "Natural / Biological pest management"
-elif example_selected == "Cotton: Leaves turning yellow (Ambiguous symptom - Tests safety refusal)":
-    default_crop = "Cotton"
-    default_problem = "My crop leaves are turning yellow."
-    default_query = "What is the exact disease and give me the chemical recipe?"
-    default_pref = "Any practice"
+col_ex1, col_ex2, col_ex3 = st.columns(3)
+preset_keys = list(EXAMPLE_QUERIES.keys())
 
+with col_ex1:
+    if st.button(
+        f"🌾 {preset_keys[0]}",
+        use_container_width=True,
+        help="Supported natural farming inquiry for cotton pests.",
+    ):
+        load_example(preset_keys[0])
+
+with col_ex2:
+    if st.button(
+        f"🐛 {preset_keys[1]}",
+        use_container_width=True,
+        help="Supported biological control inquiry for pigeon pea pod borer.",
+    ):
+        load_example(preset_keys[1])
+
+with col_ex3:
+    if st.button(
+        f"🚫 {preset_keys[2]}",
+        use_container_width=True,
+        help="Unsupported chemical inquiry testing safe refusal behavior.",
+    ):
+        load_example(preset_keys[2])
+
+st.markdown("---")
+
+
+# -----------------------------------------------------------------------------
 # User Input Form
-with st.form("advisory_form"):
+# -----------------------------------------------------------------------------
+st.subheader("📝 Farmer Inquiry")
+
+with st.form("inquiry_form"):
     col1, col2 = st.columns(2)
     with col1:
-        crop_input = st.text_input("🌾 Target Crop:", value=default_crop, placeholder="e.g. Pigeon pea, Chickpea, Cotton")
-        pref_input = st.selectbox(
-            "🌱 Farming Preference:",
-            [
-                "Natural / Biological pest management",
-                "Cultural & Preventive practices",
-                "Microbial biopesticides (Bt / NPV)",
-                "Botanical extracts (Neem / NSKE)",
-                "General sustainable advisory",
-            ],
-            index=0 if default_pref.startswith("Natural") else 4,
+        crop_input = st.text_input(
+            "🌾 Crop:",
+            key="crop_field",
+            placeholder="e.g. Cotton, Paddy, Pigeon pea, Gram",
+        )
+        approach_options = ["Natural farming", "Organic farming", "Sustainable/IPM"]
+        approach_input = st.selectbox(
+            "🌱 Farming approach:",
+            options=approach_options,
+            key="approach_field",
         )
 
     with col2:
         problem_input = st.text_input(
-            "🐛 Observed Pest / Symptoms:",
-            value=default_problem,
-            placeholder="e.g. Pod borer damage, caterpillars on flower buds",
+            "🐛 Observed pest / symptom / problem:",
+            key="problem_field",
+            placeholder="e.g. Small insects appearing under the leaves, leaf curl",
         )
-        threshold_val = st.slider(
-            "🎯 Retrieval Sensitivity Threshold (Cosine Distance):",
-            min_value=0.10,
-            max_value=0.80,
-            value=config.SIMILARITY_THRESHOLD,
+        threshold_input = st.slider(
+            "🎯 Retrieval Similarity Threshold (Cosine Distance):",
+            min_value=0.15,
+            max_value=0.60,
+            value=float(config.SIMILARITY_THRESHOLD),
             step=0.05,
-            help="Lower distance values require closer semantic match to consider evidence sufficient.",
+            help="Queries with nearest evidence distance above this threshold will safely refuse to answer.",
         )
 
-    query_input = st.text_area(
-        "❓ Farmer's Question:",
-        value=default_query,
-        placeholder="e.g. What sustainable practices can I consider to protect my crop?",
-        height=90,
+    question_input = st.text_area(
+        "❓ User question:",
+        key="question_field",
+        placeholder="e.g. What sustainable pest-management practices are relevant?",
+        height=95,
     )
 
-    submitted = st.form_submit_button("🔍 Generate Grounded Advisory", type="primary", use_container_width=True)
+    submitted = st.form_submit_button(
+        "🔍 Generate Grounded Advisory",
+        type="primary",
+        use_container_width=True,
+    )
 
+
+# -----------------------------------------------------------------------------
+# Execution & Display
+# -----------------------------------------------------------------------------
 if submitted:
-    if not query_input.strip() and not problem_input.strip():
-        st.warning("⚠️ Please provide an observed pest/problem or enter a question.")
+    if not problem_input.strip() and not question_input.strip():
+        st.warning("⚠️ Please provide an observed problem or enter a question to generate an advisory.")
     else:
-        with st.spinner("Analyzing agricultural knowledge base & grounding advisory..."):
+        with st.spinner("Retrieving verified agricultural evidence and consulting IBM Granite..."):
             try:
                 result = answer_query(
-                    query=query_input,
-                    threshold=threshold_val,
-                    crop=crop_input,
-                    problem=problem_input,
-                    preference=pref_input,
+                    query=question_input.strip() or problem_input.strip(),
+                    crop=crop_input.strip(),
+                    problem=problem_input.strip(),
+                    preference=approach_input,
+                    threshold=threshold_input,
                 )
 
-                st.markdown("### 📋 Advisory Results")
+                st.markdown("## 📋 Advisory Results")
 
                 if result.evidence_status == "insufficient":
-                    st.warning("⚠️ **Evidence Status: Insufficient Information in Current Knowledge Base**")
-                    st.info(result.answer)
-                    st.markdown(
-                        "> **Responsible AI Note:** The system refused to fabricate remedies because no verified "
-                        "guidance meeting the threshold was located in the current knowledge base. "
-                        "Please consult your local Krishi Vigyan Kendra (KVK) or State Agricultural Extension Office."
-                    )
+                    # Safe refusal when below evidence threshold
+                    st.warning("⚠️ **I could not find sufficient verified information in the current knowledge base to answer this safely.**")
+                    st.info("ℹ️ **Please consult a qualified agricultural expert or local agricultural extension service.**")
+                    st.caption("BioShield AI refuses to generate speculative remedies when verified natural farming evidence is absent.")
+
                 else:
-                    st.success("✅ **Evidence Status: Verified Guidance Located**")
-                    st.markdown(result.answer)
+                    # Successful structured advisory display
+                    st.success("✅ **Verified Agricultural Guidance Located**")
 
-                    # Display Retrieved Evidence in an Expander
-                    if result.retrieved_evidence:
-                        with st.expander(f"📑 Inspect Retrieved Evidence ({len(result.retrieved_evidence)} chunks used)"):
-                            for i, ev in enumerate(result.retrieved_evidence, start=1):
-                                st.markdown(f"**Evidence Chunk #{i}** (Distance: `{ev.distance:.4f}`)")
-                                st.markdown(f"- **Title**: {ev.metadata.get('title', 'Unknown')}")
-                                st.markdown(f"- **Source**: {ev.metadata.get('source', 'Agricultural Extension')}")
-                                st.markdown(f"- **Page**: {ev.metadata.get('page', 'N/A')}")
-                                st.text(ev.text)
-                                st.markdown("---")
+                    # 1. Possible Issue
+                    st.markdown("### 1. Possible Issue")
+                    st.write(result.get("possible_issue") or "Pest / disease symptoms matching inquiry.")
 
-                    # Sources Display
-                    if result.sources:
-                        st.subheader("📚 Verified References")
-                        for src in result.sources:
-                            st.markdown(
-                                f"- **{src.get('title', 'Agricultural Guide')}** — "
-                                f"{src.get('source', 'Research Institution')} (Page: {src.get('page', 'N/A')})"
-                            )
+                    # 2. Evidence-Based Sustainable Practices
+                    st.markdown("### 2. Evidence-Based Sustainable Practices")
+                    practices = result.get("evidence_based_practices", [])
+                    if practices:
+                        for p in practices:
+                            st.markdown(f"<div class='practice-card'>🌱 {p}</div>", unsafe_allow_html=True)
+                    else:
+                        st.write("Refer to general preventive natural farming protocols.")
 
-                    # Limitations & Disclaimer
-                    st.caption(
-                        "**Disclaimer:** BioShield AI is an informational decision-support prototype created for the "
-                        "1M1B AI for Sustainability Virtual Internship. It does not replace field visits or certified agricultural advice."
-                    )
+                    # 3. Why This May Be Relevant
+                    st.markdown("### 3. Why This May Be Relevant")
+                    st.write(result.get("why_relevant") or "Addresses observed symptoms using grounded practices.")
+
+                    # 4. Precautions
+                    st.markdown("### 4. Precautions")
+                    precautions = result.get("precautions", [])
+                    if precautions:
+                        for pr in precautions:
+                            st.markdown(f"- ⚠️ {pr}")
+                    else:
+                        st.write("Ensure standard personal protection and follow local natural formulation protocols.")
+
+                    # 5. Sources (strictly from retrieval metadata)
+                    st.markdown("### 5. Sources")
+                    sources = result.get("sources", [])
+                    if sources:
+                        for src in sources:
+                            doc_title = src.get("title", "Agricultural Extension Document")
+                            page_num = src.get("page", "N/A")
+                            section_name = src.get("section", "General Advisory")
+                            st.markdown(f"- 📄 **{doc_title}** — **Page:** {page_num} | **Section:** {section_name}")
+                        st.caption("*(Authoritative source citations verified directly against ChromaDB retrieval metadata)*")
+                    else:
+                        st.write("Core Natural Farming Knowledge Base.")
+
+                    # 6. Confidence
+                    st.markdown("### 6. Confidence")
+                    conf_val = result.get("confidence", "Medium")
+                    if conf_val == "High":
+                        badge_html = "<span class='confidence-badge-high'>🟢 High Confidence</span>"
+                    elif conf_val == "Low":
+                        badge_html = "<span class='confidence-badge-low'>🔴 Low Confidence</span>"
+                    else:
+                        badge_html = "<span class='confidence-badge-med'>🟡 Medium Confidence</span>"
+                    st.markdown(f"{badge_html} — Based on similarity score and evidence depth.", unsafe_allow_html=True)
+
+                    # 7. Limitations
+                    st.markdown("### 7. Limitations")
+                    st.info(result.get("limitations") or "Advisory prototype for informational purposes only.")
+
+                # Retrieved Evidence (Expandable Section for transparency)
+                if result.retrieved_evidence:
+                    with st.expander(f"📑 Retrieved Evidence ({len(result.retrieved_evidence)} chunks analyzed)"):
+                        st.caption("Direct text passages retrieved from ChromaDB vector store for grounding:")
+                        for idx, ev in enumerate(result.retrieved_evidence, start=1):
+                            st.markdown(f"**Evidence Chunk #{idx}** (Cosine Distance: `{ev.distance:.4f}`)")
+                            st.markdown(f"- **Document:** {ev.document_title}")
+                            st.markdown(f"- **Page:** {ev.page} | **Section:** {ev.section}")
+                            st.text(ev.text)
+                            st.markdown("---")
 
             except Exception as exc:
-                st.error(f"❌ An error occurred while executing advisory: {exc}")
-                if "GRANITE_BASE_URL" in str(exc) or "Failed to reach" in str(exc):
-                    st.info(
-                        "💡 **Granite Endpoint Configuration Reminder:**\n\n"
-                        "To connect to IBM Granite, set your credentials in the `.env` file:\n"
-                        "```bash\n"
-                        "GRANITE_MODEL=ibm/granite-3-8b-instruct\n"
-                        "GRANITE_BASE_URL=http://localhost:11434/v1  # or your watsonx endpoint\n"
-                        "GRANITE_API_KEY=your_key_if_applicable\n"
-                        "```"
-                    )
+                st.error(f"❌ {format_error_message(exc)}")
+
+# -----------------------------------------------------------------------------
+# Footer
+# -----------------------------------------------------------------------------
+st.markdown("---")
+st.markdown(
+    "<div style='text-align: center; color: #555; font-size: 0.9rem; padding: 1rem 0;'>"
+    "🌱 <strong>Prototype for AI for Sustainability — SDG 15: Life on Land</strong>"
+    "</div>",
+    unsafe_allow_html=True,
+)
