@@ -60,6 +60,14 @@ def extract_pages_from_pdf(file_path: Path) -> List[Tuple[int, str]]:
     return results
 
 
+def get_chroma_client(persist_path: str) -> chromadb.ClientAPI:
+    """Get or create a PersistentClient with standardized settings."""
+    return chromadb.PersistentClient(
+        path=persist_path,
+        settings=Settings(anonymized_telemetry=False),
+    )
+
+
 def ingest_documents(
     resources_dir: Optional[Path] = None,
     persist_dir: Optional[Path] = None,
@@ -67,6 +75,8 @@ def ingest_documents(
     target_files: Optional[List[str]] = None,
     chunk_size: int = 500,
     overlap: int = 50,
+    max_pages: Optional[int] = None,
+    embedding_model: Optional[EmbeddingModel] = None,
 ) -> int:
     """Read core documents, chunk page-by-page, embed, and store idempotently in ChromaDB.
     
@@ -93,10 +103,7 @@ def ingest_documents(
         return 0
 
     logger.info(f"Connecting to ChromaDB at: {persist_path}")
-    client = chromadb.PersistentClient(
-        path=persist_path,
-        settings=Settings(anonymized_telemetry=False),
-    )
+    client = get_chroma_client(persist_path)
     collection = client.get_or_create_collection(
         name=coll_name,
         metadata={"hnsw:space": "cosine"},
@@ -110,7 +117,7 @@ def ingest_documents(
         if res and "ids" in res:
             existing_ids = set(res["ids"])
 
-    embedding_model = EmbeddingModel()
+    embedder = embedding_model or EmbeddingModel()
     all_chunks: List[str] = []
     all_metas: List[Dict[str, Any]] = []
     all_ids: List[str] = []
@@ -121,6 +128,9 @@ def ingest_documents(
         doc_id = doc_meta.get("document_id", file_path.stem.lower())
         logger.info(f"Extracting pages for: {file_path.name}")
         pages = extract_pages_from_pdf(file_path)
+        if max_pages is not None:
+            pages = pages[:max_pages]
+
 
         for page_num, page_text in pages:
             chunks = chunk_page_text(
@@ -149,7 +159,8 @@ def ingest_documents(
         return 0
 
     logger.info(f"Generating embeddings for {len(all_chunks)} new chunks...")
-    embeddings = embedding_model.embed_texts(all_chunks)
+    embeddings = embedder.embed_texts(all_chunks)
+
 
     # Ingest into ChromaDB in batches of 100
     batch_size = 100
