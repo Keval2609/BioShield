@@ -68,31 +68,45 @@ flowchart TD
 BioShield/
 ├── .env.example              # Template environment variables
 ├── .gitignore                # Git exclusions (.env, chroma_db, caches)
+├── pytest.ini                # Pytest configuration
 ├── requirements.txt          # Python dependencies
 ├── README.md                 # Project documentation
+├── ingest.py                 # Root CLI ingestion entrypoint
 ├── app.py                    # Streamlit web application
+├── resources/                # Curated agricultural reference documents
+│   ├── Field_Guide_for_Natural_Farming.pdf
+│   ├── Generic Protocols for Natural Farming.pdf
+│   ├── GujaratNaturalFarmingScienceUniversityGujarat.pdf
+│   ├── PEST and DISEASE MANAGEMENT.pdf
+│   └── Natural Farming Training Toolkit.pdf
 ├── data/
-│   ├── raw/                  # Trusted agricultural guidance documents
-│   │   └── sample_icar_pigeonpea.txt
+│   ├── raw/                  # Additional raw guidance documents
+│   ├── secondary/            # Optional non-core/IPM guidance documents
 │   └── processed/            # Processed text artifacts
 ├── chroma_db/                # Local ChromaDB vector database (generated on ingest)
 ├── docs/
 │   ├── prd.md                # Comprehensive Product Requirements Document
-│   └── prompts.md            # Reference development prompts
+│   └── plans/                # Phased development plans
 ├── src/
 │   ├── __init__.py           # Package marker
-│   ├── config.py             # Environment configuration
-│   ├── chunking.py           # Text cleaning and word chunking
+│   ├── config.py             # Environment and directory configuration
+│   ├── document_catalog.py   # Core vs secondary document registry & metadata
+│   ├── chunking.py           # Section-aware and page-aware chunking
 │   ├── embeddings.py         # Sentence-transformer embedding wrapper
-│   ├── retriever.py          # Vector retrieval and evidence evaluation
+│   ├── retriever.py          # Vector retrieval, scoring & evidence evaluation
 │   ├── llm.py                # IBM Granite inference client
 │   ├── prompts.py            # Grounded advisory prompts
 │   ├── ingest.py             # Idempotent document ingestion pipeline
 │   └── rag_pipeline.py       # End-to-end RAG workflow & safe fallback
 └── tests/
-    ├── test_chunking.py      # Chunking & whitespace tests
-    ├── test_retriever.py     # Threshold filtering tests
-    └── test_pipeline.py      # Evidence sufficiency & safe fallback tests
+    ├── test_config.py        # Environment & directory configuration tests
+    ├── test_document_catalog.py # Corpus metadata & isolation tests
+    ├── test_chunking.py      # Section & page-aware chunking tests
+    ├── test_pdf_extraction.py # PDF extraction & error handling tests
+    ├── test_ingest.py        # ChromaDB persistence & idempotency tests
+    ├── test_retriever.py     # Source metadata, ranking & threshold tests
+    ├── test_pipeline.py      # Evidence sufficiency & safe fallback tests
+    └── test_e2e_retrieval.py # End-to-end knowledge base retrieval tests
 ```
 
 ---
@@ -151,31 +165,38 @@ SIMILARITY_THRESHOLD=0.35
 
 ## 7. Running the Pipeline
 
-### 1. Ingest Documents into Knowledge Base
+### 1. Ingest Core Documents into Knowledge Base
 
-Place your authoritative agricultural PDF or TXT guides into `data/raw/`, then run:
+Run the idempotent knowledge base ingestion pipeline:
 
 ```bash
-python -m src.ingest
+python ingest.py
 ```
 
-This will clean, chunk, embed, and store documents into `chroma_db/` idempotently.
+This will:
+- Extract text page-by-page from the 5 core natural farming PDFs in `resources/`
+- Perform section-aware chunking (~400–700 tokens, 50–100 token overlap)
+- Preserve exact page numbers and document metadata
+- Compute embeddings via `sentence-transformers/all-MiniLM-L6-v2`
+- Persist vectors into local `chroma_db/` idempotently (rerunning will add 0 duplicate chunks)
 
-### 2. Launch the Streamlit Web UI
+### 2. Run Automated Tests
+
+Execute the complete test suite:
+
+```bash
+pytest
+# or
+python -m pytest -v
+```
+
+All 22 unit, integration, and end-to-end tests will execute.
+
+### 3. Launch the Streamlit Web UI
 
 ```bash
 streamlit run app.py
-```
 
-The application will open in your browser at `http://localhost:8501`.
-
-### 3. Run Automated Tests
-
-```bash
-python -m pytest tests/
-```
-
-All tests for chunking, retriever filtering, and pipeline fallbacks will execute and validate.
 
 ---
 

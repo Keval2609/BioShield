@@ -23,6 +23,13 @@ from src import config
 from src.document_catalog import CORE_DOCUMENTS
 from src.ingest import ingest_documents
 
+# Ensure Windows terminal handles UTF-8 characters safely
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -68,8 +75,9 @@ def main():
     args = parser.parse_args()
 
     print("=" * 65)
-    print("🌾 BioShield AI — Natural Farming Knowledge Base Ingestion")
+    print("[BioShield AI] Natural Farming Knowledge Base Ingestion")
     print("=" * 65)
+
     print(f"Resources Directory : {args.resources_dir}")
     print(f"ChromaDB Persistence: {args.persist_dir}")
     print(f"Collection Name     : {args.collection}")
