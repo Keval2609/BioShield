@@ -97,6 +97,7 @@ BioShield/
 │   ├── llm.py                # IBM Granite inference client (BaseLLM, FakeLLM, GraniteLLM)
 │   ├── prompts.py            # Grounded advisory prompts with XML delimiters & schema
 │   ├── advisory_schema.py    # Structured advisory JSON schema & resilient parser
+│   ├── ui_helpers.py         # UI helper utilities, error mapping, and demo presets
 │   ├── ingest.py             # Idempotent document ingestion pipeline
 │   ├── rag_pipeline.py       # End-to-end RAG workflow, gating & source verification
 │   └── rag.py                # Public entrypoint exporting answer_query & schemas
@@ -112,7 +113,9 @@ BioShield/
     ├── test_advisory_schema.py # Structured output parsing & fallback tests
     ├── test_pipeline.py      # Evidence sufficiency & safe fallback tests
     ├── test_e2e_retrieval.py # End-to-end knowledge base retrieval tests
-    └── test_rag_integration.py # Live ChromaDB + Granite grounded RAG integration tests
+    ├── test_rag_integration.py # Live ChromaDB + Granite grounded RAG integration tests
+    ├── test_ui_helpers.py    # UI helper & human-readable error formatting tests
+    └── test_app_ui.py        # Streamlit AppTest automated UI rendering & interaction tests
 ```
 
 ---
@@ -238,7 +241,24 @@ If evidence distance exceeds `SIMILARITY_THRESHOLD`, Granite is **not invoked**,
 }
 ```
 
-### 4. Run Automated Tests
+### 4. Launch the Streamlit Web Application
+
+Launch the interactive, responsible decision-support interface:
+
+```bash
+streamlit run app.py
+```
+
+The Streamlit UI features:
+- **Responsible-AI Disclaimer:** Prominently highlights that BioShield AI is a decision-support prototype and advises verification with local KVK experts for severe crop problems.
+- **3 Demo Mode Presets:** One-click buttons to populate inquiries for supported natural farming scenarios (cotton sucking pests, pigeon pea pod borer) or test safe refusal against synthetic chemical requests.
+- **Structured 4-Field Input Form:** Crop, Observed symptom/problem, Farming approach (`Natural farming`, `Organic farming`, `Sustainable/IPM`), and User Question.
+- **7-Section Advisory Presentation:** Possible Issue, Evidence-Based Practices, Why Relevant, Precautions, Sources, Confidence Badge, and Limitations.
+- **Expandable Retrieved Evidence:** Transparently displays retrieved document titles, page numbers, sections, text passages, and cosine distance scores.
+- **Responsible AI Sidebar:** Complete overview of safety guardrails and live ChromaDB chunk counters.
+- **Human-Friendly Error Handling:** Explains missing configurations or unreachable endpoints cleanly without dumping raw Python stack traces.
+
+### 5. Run Automated Tests
 
 Execute the complete test suite:
 
@@ -246,7 +266,7 @@ Execute the complete test suite:
 pytest -v
 ```
 
-All 36 unit, integration, schema, and end-to-end tests will execute across:
+All 46 unit, integration, schema, and UI tests will execute across:
 - Configuration and document catalog isolation
 - PDF extraction and chunking
 - ChromaDB persistence and idempotency
@@ -255,6 +275,8 @@ All 36 unit, integration, schema, and end-to-end tests will execute across:
 - IBM Granite LLM inference, timeouts, and auth headers
 - Structured advisory JSON schema validation and resilient fallback parsing
 - Grounded RAG integration pipeline with source verification
+- UI helper functions and human-readable exception mapping
+- Automated Streamlit UI rendering and interaction flows (`streamlit.testing.v1.AppTest`)
 
 ---
 
