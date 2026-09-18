@@ -1,0 +1,28 @@
+Title: ICAR Advisory on Integrated Pest Management in Pulses
+Source: Indian Council of Agricultural Research (ICAR)
+Year: 2023
+Crop: Pigeon pea (Arhar / Cajanus cajan)
+Topic: Sustainable and Biological Management of Gram Pod Borer (Helicoverpa armigera)
+
+1. Identification and Damage Symptoms:
+The gram pod borer (Helicoverpa armigera) is a major destructive pest of pigeon pea. Young larvae feed on tender foliage and flower buds, while mature larvae bore into developing pods, consuming seeds with only their anterior body inside the pod hole. Defoliation, damaged flowers, and bored pods with round entry holes and frass indicate severe infestation.
+
+2. Cultural and Preventive Management:
+- Deep summer ploughing: Thorough summer ploughing exposes overwintering pupae in the soil to scorching sun heat and predatory birds.
+- Trap crops and intercropping: Intercropping pigeon pea with sorghum, pearl millet, or coriander attracts natural predators and reduces pest concentration. Growing marigold or sunflower on field borders acts as a trap crop for egg-laying moths.
+- Bird perches: Install 40 to 50 T-shaped wooden bird perches per hectare throughout the field at 1 meter above the crop canopy. This facilitates insectivorous birds like the black drongo and common myna to prey on caterpillars.
+
+3. Monitoring and Mechanical Control:
+- Pheromone traps: Install pheromone traps with Helilure at 4 to 5 traps per hectare for pest population monitoring. If trap catches exceed 4 to 5 moths per trap per day for three consecutive days, initiate biological interventions immediately.
+- Hand picking: In smallholder plots, hand collection and mechanical destruction of early instar caterpillars and egg masses during early morning hours effectively reduces initial pest buildup.
+
+4. Biological and Botanical Management:
+- Neem Seed Kernel Extract (NSKE): Spray freshly prepared 5% Neem Seed Kernel Extract (NSKE 5%) or neem oil formulation at the initiation of flower bud formation. NSKE acts as an oviposition deterrent and antifeedant.
+- Microbial biopesticides: Spray Helicoverpa armigera Nuclear Polyhedrosis Virus (HaNPV) at 250 LE (Larval Equivalents) per hectare or Bacillus thuringiensis (Bt) var. kurstaki at 1.0 to 1.5 kg per hectare against early stage (1st and 2nd instar) larvae.
+- Trichogramma egg parasitoids: Release Trichogramma chilonis at 100,000 parasitoids per hectare at weekly intervals during peak flowering.
+
+5. Important Safety Precautions and Guidelines:
+- Apply microbial biopesticides (Bt and HaNPV) and neem formulations during late afternoon or evening hours to avoid rapid inactivation by direct solar UV radiation.
+- Add 0.1% jaggery (or wetting agent) with HaNPV spray to enhance virus persistence and larval ingestion.
+- Never mix biological formulations with alkaline substances, lime, or synthetic chemical solutions.
+- If pest incidence exceeds economic injury thresholds (more than 10% damaged pods) or symptoms are ambiguous, consult local Krishi Vigyan Kendra (KVK) scientists or agricultural extension officers immediately.
