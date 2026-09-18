@@ -1,10 +1,32 @@
-"""LLM client for IBM Granite inference."""
+"""LLM client for IBM Granite inference with isolated provider interface."""
 
-import os
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any, Dict, List, Optional, Protocol
 import requests
 
 from src import config
+
+logger = logging.getLogger("bioshield.llm")
+
+
+class BaseLLM(Protocol):
+    """Protocol defining the inference interface for BioShield AI language models."""
+
+    def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:
+        """Generate a text response given a list of chat messages."""
+        ...
+
+
+class FakeLLM:
+    """Mock LLM implementation for tests and offline development."""
+
+    def __init__(self, response: str = "{}"):
+        self.response = response
+        self.last_messages: List[Dict[str, str]] = []
+
+    def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:
+        self.last_messages = messages
+        return self.response
 
 
 class GraniteLLM:
@@ -37,7 +59,7 @@ class GraniteLLM:
 
         Raises:
             ValueError: If endpoint is not configured.
-            RuntimeError: If API call fails or returns non-200.
+            RuntimeError: If API call fails, times out, or returns non-200.
         """
         if not self.base_url:
             raise ValueError(
@@ -58,6 +80,10 @@ class GraniteLLM:
 
         try:
             response = requests.post(endpoint, json=payload, headers=headers, timeout=self.timeout)
+        except requests.exceptions.Timeout as exc:
+            raise RuntimeError(
+                f"IBM Granite endpoint timed out after {self.timeout}s at {endpoint}."
+            ) from exc
         except requests.exceptions.RequestException as exc:
             raise RuntimeError(
                 f"Failed to reach IBM Granite endpoint at {endpoint}. Error: {exc}"
