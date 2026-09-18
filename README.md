@@ -125,7 +125,7 @@ BioShield/
 ### Step 1: Clone Repository & Create Virtual Environment
 
 ```bash
-git clone https://github.com/your-username/BioShield.git
+git clone https://github.com/Keval2609/BioShield.git
 cd BioShield
 
 # Create a Python 3.11 virtual environment
