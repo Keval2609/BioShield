@@ -22,6 +22,9 @@ SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD", "0.35"))
 CHROMA_PERSIST_DIR = Path(os.getenv("CHROMA_PERSIST_DIR", str(PROJECT_ROOT / "chroma_db")))
 DATA_RAW_DIR = Path(os.getenv("DATA_RAW_DIR", str(PROJECT_ROOT / "data" / "raw")))
 DATA_PROCESSED_DIR = Path(os.getenv("DATA_PROCESSED_DIR", str(PROJECT_ROOT / "data" / "processed")))
+CORE_RESOURCES_DIR = Path(os.getenv("CORE_RESOURCES_DIR", str(PROJECT_ROOT / "resources")))
+DATA_SECONDARY_DIR = Path(os.getenv("DATA_SECONDARY_DIR", str(PROJECT_ROOT / "data" / "secondary")))
 
 # Collection Name in ChromaDB
 CHROMA_COLLECTION_NAME = "agricultural_advisory"
+
