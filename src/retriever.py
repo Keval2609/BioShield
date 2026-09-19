@@ -6,7 +6,7 @@ import chromadb
 from chromadb.config import Settings
 
 from src import config
-from src.embeddings import EmbeddingModel
+from src.embeddings import embed_query
 
 
 @dataclass
@@ -122,11 +122,11 @@ class ChromaRetriever:
         self,
         persist_directory: Optional[str] = None,
         collection_name: Optional[str] = None,
-        embedding_model: Optional[EmbeddingModel] = None,
+        embedding_model_name: Optional[str] = None,
     ):
         self.persist_dir = persist_directory or str(config.CHROMA_PERSIST_DIR)
         self.collection_name = collection_name or config.CHROMA_COLLECTION_NAME
-        self.embedding_model = embedding_model or EmbeddingModel()
+        self.embedding_model_name = embedding_model_name
         self._client = None
         self._collection = None
 
@@ -156,7 +156,7 @@ class ChromaRetriever:
         if collection is None or collection.count() == 0:
             return RetrievalResult(evidence=[])
 
-        query_embedding = self.embedding_model.embed_query(query)
+        query_embedding = embed_query(query, self.embedding_model_name)
         results = collection.query(
             query_embeddings=[query_embedding],
             n_results=min(k, collection.count()),

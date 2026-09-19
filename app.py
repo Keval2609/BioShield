@@ -8,7 +8,7 @@ Streamlit Demonstration UI for responsible, document-grounded agricultural decis
 import streamlit as st
 
 from src import config
-from src.rag import answer_query
+from src.rag_pipeline import answer_query
 from src.ui_helpers import (
     EXAMPLE_QUERIES,
     check_kb_status,

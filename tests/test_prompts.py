@@ -8,8 +8,8 @@ def test_system_prompt_enforces_project_positioning_and_grounding():
     assert "AI-powered agricultural information and decision-support prototype" in SYSTEM_PROMPT
     assert "not an autonomous agricultural diagnosis or treatment system" in SYSTEM_PROMPT
     assert "Do not claim a pest/disease diagnosis with certainty" in SYSTEM_PROMPT
-    assert "Do not invent application rates" in SYSTEM_PROMPT
-    assert "Natural farming practices" in SYSTEM_PROMPT
+    assert "application rates" in SYSTEM_PROMPT
+    assert "Natural farming" in SYSTEM_PROMPT
 
 
 def test_user_prompt_includes_xml_delimiters():

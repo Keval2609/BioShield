@@ -1,6 +1,7 @@
 """RAG pipeline connecting retrieval to IBM Granite grounded generation."""
 
 import logging
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from src import config
@@ -10,13 +11,13 @@ from src.advisory_schema import (
     InsufficientEvidenceOutput,
     parse_advisory_response,
 )
-from src.llm import BaseLLM, OllamaProvider, GroqProvider
+from src.llm import OllamaProvider, GroqProvider
 from src.prompts import SYSTEM_PROMPT, build_user_prompt, format_evidence_context
 from src.retriever import ChromaRetriever, Evidence, has_sufficient_evidence
 
 logger = logging.getLogger("bioshield.rag_pipeline")
 
-def get_llm_provider() -> BaseLLM:
+def get_llm_provider() -> Any:
     """Factory to instantiate the configured LLM provider."""
     if config.LLM_PROVIDER == "groq":
         return GroqProvider()
@@ -28,51 +29,50 @@ SAFE_FALLBACK = (
 )
 
 
-class StructuredAdvisoryResult(dict):
-    """Dual-access advisory result supporting dictionary indexing and object attributes."""
-
-    def __init__(self, data: Dict[str, Any], retrieved_evidence: Optional[List[Evidence]] = None):
-        super().__init__(data)
-        self._retrieved_evidence = retrieved_evidence or []
+@dataclass
+class StructuredAdvisoryResult:
+    """Advisory result containing response data and retrieved evidence."""
+    data: Dict[str, Any]
+    retrieved_evidence: List[Evidence] = field(default_factory=list)
 
     @property
     def evidence_status(self) -> str:
-        if self.get("status") == "INSUFFICIENT_EVIDENCE":
+        if self.data.get("status") == "INSUFFICIENT_EVIDENCE":
             return "insufficient"
         return "sufficient"
 
     @property
     def status(self) -> str:
-        return str(self.get("status", "SUCCESS"))
+        return str(self.data.get("status", "SUCCESS"))
 
     @property
     def answer(self) -> str:
         """Render human-friendly formatted advisory text for UI display."""
         if self.evidence_status == "insufficient":
-            return str(self.get("message", SAFE_FALLBACK))
+            return str(self.data.get("message", SAFE_FALLBACK))
 
         lines = []
-        if self.get("possible_issue"):
-            lines.append(f"**Possible Issue:** {self['possible_issue']}\n")
+        if self.data.get("possible_issue"):
+            lines.append(f"**Possible Issue:** {self.data['possible_issue']}\n")
 
-        practices = self.get("evidence_based_practices", [])
+        practices = self.data.get("evidence_based_practices", [])
         if practices:
             lines.append("**Evidence-Based Practices:**")
             for p in practices:
                 lines.append(f"- {p}")
             lines.append("")
 
-        if self.get("why_relevant"):
-            lines.append(f"**Why Relevant:** {self['why_relevant']}\n")
+        if self.data.get("why_relevant"):
+            lines.append(f"**Why Relevant:** {self.data['why_relevant']}\n")
 
-        precautions = self.get("precautions", [])
+        precautions = self.data.get("precautions", [])
         if precautions:
             lines.append("**Precautions:**")
             for pr in precautions:
                 lines.append(f"- {pr}")
             lines.append("")
 
-        limitations = self.get("limitations", [])
+        limitations = self.data.get("limitations", [])
         if limitations:
             lines.append(f"**Notice:** {limitations[0]}\n")
 
@@ -80,18 +80,24 @@ class StructuredAdvisoryResult(dict):
 
     @property
     def sources(self) -> List[Dict[str, Any]]:
-        return self.get("sources", [])
+        return self.data.get("sources", [])
 
     @property
     def confidence(self) -> str:
-        return str(self.get("confidence", "Medium"))
+        return str(self.data.get("confidence", "Medium"))
 
-    @property
-    def retrieved_evidence(self) -> List[Evidence]:
-        return self._retrieved_evidence
+    def get(self, key: str, default: Any = None) -> Any:
+        """Provide dict-like get method for backwards compatibility."""
+        return self.data.get(key, default)
 
     def to_dict(self) -> Dict[str, Any]:
-        return dict(self)
+        return self.data.copy()
+
+    def __getitem__(self, key: str) -> Any:
+        return self.data[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.data
 
 
 def determine_confidence(filtered_evidence: List[Evidence]) -> str:

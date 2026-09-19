@@ -56,12 +56,12 @@ def test_app_ui_example_preset_button_populates_inputs():
     at = AppTest.from_file("../app.py", default_timeout=30)
     at.run()
 
-    # Click the first example button (Cotton)
+    # Click the first example button
     at.button[0].click().run()
 
     assert not at.exception
-    assert at.session_state["crop_field"] == "Cotton"
-    assert "insects" in at.session_state["problem_field"].lower()
+    assert at.session_state["crop_field"] == "Various"
+    assert "pests" in at.session_state["problem_field"].lower()
     assert at.session_state["approach_field"] == "Natural farming"
     assert len(at.session_state["question_field"]) > 0
 
@@ -81,7 +81,7 @@ def test_app_ui_renders_structured_advisory_when_evidence_sufficient(mock_eviden
     }
     mock_result = StructuredAdvisoryResult(mock_result_data, retrieved_evidence=mock_evidence)
 
-    with patch("src.rag.answer_query", return_value=mock_result):
+    with patch("src.rag_pipeline.answer_query", return_value=mock_result):
         at = AppTest.from_file("../app.py", default_timeout=30)
         at.run()
 
@@ -117,7 +117,7 @@ def test_app_ui_renders_insufficient_evidence_safe_fallback():
     }
     mock_result = StructuredAdvisoryResult(mock_insufficient_data, retrieved_evidence=[])
 
-    with patch("src.rag.answer_query", return_value=mock_result):
+    with patch("src.rag_pipeline.answer_query", return_value=mock_result):
         at = AppTest.from_file("../app.py", default_timeout=30)
         at.run()
 

@@ -14,7 +14,7 @@ from src.document_catalog import (
     get_document_metadata,
     is_core_document,
 )
-from src.embeddings import EmbeddingModel
+from src.embeddings import embed_texts
 
 logger = logging.getLogger("bioshield.ingest")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -76,7 +76,7 @@ def ingest_documents(
     chunk_size: int = 500,
     overlap: int = 50,
     max_pages: Optional[int] = None,
-    embedding_model: Optional[EmbeddingModel] = None,
+    embedding_model_name: Optional[str] = None,
 ) -> int:
     """Read core documents, chunk page-by-page, embed, and store idempotently in ChromaDB.
     
@@ -117,7 +117,6 @@ def ingest_documents(
         if res and "ids" in res:
             existing_ids = set(res["ids"])
 
-    embedder = embedding_model or EmbeddingModel()
     all_chunks: List[str] = []
     all_metas: List[Dict[str, Any]] = []
     all_ids: List[str] = []
@@ -159,7 +158,7 @@ def ingest_documents(
         return 0
 
     logger.info(f"Generating embeddings for {len(all_chunks)} new chunks...")
-    embeddings = embedder.embed_texts(all_chunks)
+    embeddings = embed_texts(all_chunks, embedding_model_name)
 
 
     # Ingest into ChromaDB in batches of 100

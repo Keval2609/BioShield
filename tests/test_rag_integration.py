@@ -2,8 +2,18 @@
 
 import json
 import pytest
-from src.llm import FakeLLM
-from src.rag import answer_query
+from typing import Dict, List
+from src.rag_pipeline import answer_query
+
+class FakeLLM:
+    """Mock LLM implementation for tests."""
+    def __init__(self, response: str = "{}"):
+        self.response = response
+        self.last_messages: List[Dict[str, str]] = []
+
+    def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:
+        self.last_messages = messages
+        return self.response
 from src.retriever import ChromaRetriever
 
 MOCK_LLM_ADVISORY = json.dumps({

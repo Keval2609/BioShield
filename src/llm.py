@@ -1,32 +1,12 @@
 """LLM client layer supporting local (Ollama) and cloud (Groq) providers."""
 
 import logging
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Optional
 import requests
 
 from src import config
 
 logger = logging.getLogger("bioshield.llm")
-
-
-class BaseLLM(Protocol):
-    """Protocol defining the inference interface for BioShield AI language models."""
-
-    def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:
-        """Generate a text response given a list of chat messages."""
-        ...
-
-
-class FakeLLM:
-    """Mock LLM implementation for tests and offline development."""
-
-    def __init__(self, response: str = "{}"):
-        self.response = response
-        self.last_messages: List[Dict[str, str]] = []
-
-    def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:
-        self.last_messages = messages
-        return self.response
 
 
 class OllamaProvider:
@@ -38,8 +18,8 @@ class OllamaProvider:
         model: Optional[str] = None,
         timeout: int = 120,
     ):
-        self.base_url = (base_url or config.OLLAMA_BASE_URL).rstrip("/")
-        self.model = model or config.OLLAMA_MODEL
+        self.base_url = (base_url if base_url is not None else config.OLLAMA_BASE_URL).rstrip("/")
+        self.model = model if model is not None else config.OLLAMA_MODEL
         self.timeout = timeout
 
     def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:
@@ -86,8 +66,8 @@ class GroqProvider:
         model: Optional[str] = None,
         timeout: int = 45,
     ):
-        self.api_key = api_key or config.GROQ_API_KEY
-        self.model = model or config.GROQ_MODEL
+        self.api_key = api_key if api_key is not None else config.GROQ_API_KEY
+        self.model = model if model is not None else config.GROQ_MODEL
         self.timeout = timeout
 
     def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:

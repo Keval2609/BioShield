@@ -8,7 +8,7 @@ import os
 import pytest
 
 from src import config
-from src.rag import answer_query
+from src.rag_pipeline import answer_query
 from src.retriever import ChromaRetriever
 from src.llm import OllamaProvider
 
