@@ -133,10 +133,17 @@ with st.sidebar:
         st.warning(f"📚 Knowledge Base: {kb_msg}")
         st.caption("Run `python ingest.py` in your terminal to index the core manuals.")
 
-    if config.GRANITE_BASE_URL:
-        st.info(f"🤖 Granite Model: `{config.GRANITE_MODEL}`")
+    st.info(f"🤖 LLM Provider: `{config.LLM_PROVIDER.upper()}`")
+    if config.LLM_PROVIDER == "groq":
+        if config.GROQ_API_KEY:
+            st.caption(f"Model: {config.GROQ_MODEL}")
+        else:
+            st.warning("⚠️ Groq API Key Not Configured")
     else:
-        st.warning("🤖 Granite Endpoint: Not Configured in `.env`")
+        if config.OLLAMA_BASE_URL:
+            st.caption(f"Model: {config.OLLAMA_MODEL}")
+        else:
+            st.warning("⚠️ Ollama Endpoint Not Configured")
 
 
 # -----------------------------------------------------------------------------

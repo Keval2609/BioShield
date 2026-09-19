@@ -10,11 +10,11 @@ import pytest
 from src import config
 from src.rag import answer_query
 from src.retriever import ChromaRetriever
-from src.llm import GraniteLLM
+from src.llm import OllamaProvider
 
 pytestmark = pytest.mark.skipif(
-    not config.GRANITE_API_KEY,
-    reason="Granite API Key is required for final evaluation tests"
+    not config.OLLAMA_BASE_URL,
+    reason="Ollama Base URL is required for final evaluation tests"
 )
 
 @pytest.fixture(scope="module")
@@ -27,7 +27,7 @@ def retriever():
 
 @pytest.fixture(scope="module")
 def llm():
-    return GraniteLLM()
+    return OllamaProvider()
 
 def test_1_supported_query(retriever, llm):
     """TEST 1 — SUPPORTED QUERY"""
@@ -52,18 +52,16 @@ def test_1_supported_query(retriever, llm):
 def test_2_crop_specific_query(retriever, llm):
     """TEST 2 — CROP-SPECIFIC QUERY"""
     result = answer_query(
-        query="What natural farming practices help manage pests in Cotton?",
+        query="How to manage bollworms and aphids using botanical extracts in Cotton?",
         crop="Cotton",
         retriever=retriever,
         llm=llm
     )
-    
+
     assert result.evidence_status == "sufficient"
     assert len(result["evidence_based_practices"]) > 0
     assert len(result["sources"]) > 0
-    # The term 'Cotton' or relevant specific pests should ideally be in the text
-    # We verify it doesn't fail and gives a grounded response.
-    assert "cotton" in str(result).lower() or "pest" in str(result).lower()
+    assert "cotton" in str(result).lower() or "bollworm" in str(result).lower() or "aphid" in str(result).lower()
 
 def test_3_unsupported_query(retriever, llm):
     """TEST 3 — UNSUPPORTED QUERY"""

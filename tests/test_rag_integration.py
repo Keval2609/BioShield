@@ -6,7 +6,7 @@ from src.llm import FakeLLM
 from src.rag import answer_query
 from src.retriever import ChromaRetriever
 
-MOCK_GRANITE_ADVISORY = json.dumps({
+MOCK_LLM_ADVISORY = json.dumps({
     "possible_issue": "The symptoms may be consistent with insect pest pressure on cotton crops.",
     "evidence_based_practices": [
         "Foliar application of Neem Seed Kernel Extract (NSKE 5%)",
@@ -26,13 +26,13 @@ MOCK_GRANITE_ADVISORY = json.dumps({
 })
 
 
-def test_live_chromadb_with_mock_granite_pipeline():
+def test_live_chromadb_with_mock_llm_pipeline():
     retriever = ChromaRetriever()
     coll = retriever._get_collection()
     if coll is None or coll.count() == 0:
         pytest.skip("ChromaDB knowledge base is not populated. Run python ingest.py first.")
 
-    mock_llm = FakeLLM(response=MOCK_GRANITE_ADVISORY)
+    mock_llm = FakeLLM(response=MOCK_LLM_ADVISORY)
 
     result = answer_query(
         query="What natural botanical formulation can I spray to control caterpillar pests?",

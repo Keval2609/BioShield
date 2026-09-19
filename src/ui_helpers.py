@@ -38,14 +38,14 @@ def format_error_message(exc: Exception) -> str:
 
     if isinstance(exc, (ConnectionError, ConnectionRefusedError)) or "connection" in error_text or "10061" in error_text:
         return (
-            "Unable to connect to the IBM Granite inference service. "
+            "Unable to connect to the local inference service. "
             "Please verify that your model server (such as Ollama or vLLM) is running and accessible, "
-            f"or ensure `GRANITE_BASE_URL` ({config.GRANITE_BASE_URL or 'not set'}) is properly configured in your `.env` file."
+            f"or ensure `OLLAMA_BASE_URL` ({getattr(config, 'OLLAMA_BASE_URL', 'not set')}) is properly configured in your `.env` file."
         )
 
     if isinstance(exc, TimeoutError) or "timed out" in error_text:
         return (
-            "The advisory request timed out while waiting for IBM Granite to respond. "
+            "The advisory request timed out while waiting for Ollama to respond. "
             "This can happen if the local LLM is compiling or system load is high. "
             "Please try submitting your inquiry again."
         )

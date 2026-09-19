@@ -10,11 +10,17 @@ from src.advisory_schema import (
     InsufficientEvidenceOutput,
     parse_advisory_response,
 )
-from src.llm import BaseLLM, GraniteLLM
+from src.llm import BaseLLM, OllamaProvider, GroqProvider
 from src.prompts import SYSTEM_PROMPT, build_user_prompt, format_evidence_context
 from src.retriever import ChromaRetriever, Evidence, has_sufficient_evidence
 
 logger = logging.getLogger("bioshield.rag_pipeline")
+
+def get_llm_provider() -> BaseLLM:
+    """Factory to instantiate the configured LLM provider."""
+    if config.LLM_PROVIDER == "groq":
+        return GroqProvider()
+    return OllamaProvider()
 
 SAFE_FALLBACK = (
     "I could not find sufficient verified information in the current knowledge base to answer this safely. "
@@ -148,7 +154,7 @@ def answer_query(
     """
     eff_threshold = threshold if threshold is not None else config.SIMILARITY_THRESHOLD
     eff_retriever = retriever if retriever is not None else ChromaRetriever()
-    eff_llm = llm if llm is not None else GraniteLLM()
+    eff_llm = llm if llm is not None else get_llm_provider()
 
     # Build contextual query if crop/problem are provided
     search_terms = []
@@ -184,9 +190,9 @@ def answer_query(
         {"role": "user", "content": user_prompt},
     ]
 
-    # Generate response via IBM Granite with error resilience
+    # Generate response via LLM with error resilience
     try:
-        raw_answer = eff_llm.generate(messages, temperature=0.0)
+        raw_answer = eff_llm.generate(messages, temperature=0.1)
         advisory_obj = parse_advisory_response(raw_answer, fallback_sources=verified_sources)
         advisory_data = advisory_obj.to_dict()
         # Always enforce verified retrieval metadata for citations

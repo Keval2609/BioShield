@@ -1,4 +1,4 @@
-"""LLM client for IBM Granite inference with isolated provider interface."""
+"""LLM client layer supporting local (Ollama) and cloud (Groq) providers."""
 
 import logging
 from typing import Any, Dict, List, Optional, Protocol
@@ -29,49 +29,23 @@ class FakeLLM:
         return self.response
 
 
-class GraniteLLM:
-    """Client for IBM Granite model inference via OpenAI-compatible REST endpoints.
-    
-    Supports local deployments (e.g. Ollama, vLLM) and remote endpoints (e.g. watsonx.ai).
-    """
+class OllamaProvider:
+    """Client for local Ollama inference via OpenAI-compatible REST endpoints."""
 
     def __init__(
         self,
-        model: Optional[str] = None,
         base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
+        model: Optional[str] = None,
         timeout: int = 45,
     ):
-        self.model = model or config.GRANITE_MODEL
-        self.base_url = (base_url or config.GRANITE_BASE_URL).rstrip("/")
-        self.api_key = api_key or config.GRANITE_API_KEY
+        self.base_url = (base_url or config.OLLAMA_BASE_URL).rstrip("/")
+        self.model = model or config.OLLAMA_MODEL
         self.timeout = timeout
 
     def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:
-        """Call Granite model with chat messages list at temperature 0 (deterministic).
-        
-        Args:
-            messages: List of message dictionaries, e.g. [{"role": "system", ...}, {"role": "user", ...}]
-            temperature: Sampling temperature, defaults to 0.0 for strict grounding.
-
-        Returns:
-            The generated response string.
-
-        Raises:
-            ValueError: If endpoint is not configured.
-            RuntimeError: If API call fails, times out, or returns non-200.
-        """
-        if not self.base_url:
-            raise ValueError(
-                "GRANITE_BASE_URL is not set. Please configure GRANITE_BASE_URL in your .env file "
-                "(e.g., http://localhost:11434/v1 for local Ollama or your cloud endpoint)."
-            )
-
+        """Call Ollama model with chat messages list at given temperature."""
+        endpoint = f"{self.base_url}/v1/chat/completions"
         headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
-
-        endpoint = f"{self.base_url}/chat/completions"
         payload: Dict[str, Any] = {
             "model": self.model,
             "messages": messages,
@@ -82,24 +56,78 @@ class GraniteLLM:
             response = requests.post(endpoint, json=payload, headers=headers, timeout=self.timeout)
         except requests.exceptions.Timeout as exc:
             raise RuntimeError(
-                f"IBM Granite endpoint timed out after {self.timeout}s at {endpoint}."
+                f"Ollama endpoint timed out after {self.timeout}s at {endpoint}."
             ) from exc
         except requests.exceptions.RequestException as exc:
             raise RuntimeError(
-                f"Failed to reach IBM Granite endpoint at {endpoint}. Error: {exc}"
+                f"Local Granite model is unavailable. Please start Ollama and ensure {self.model} is installed. Error: {exc}"
             ) from exc
 
         if response.status_code != 200:
-            raise RuntimeError(
-                f"IBM Granite API returned HTTP {response.status_code}: {response.text}"
-            )
+            raise RuntimeError(f"Ollama API returned HTTP {response.status_code}: {response.text}")
 
         try:
             data = response.json()
             choices = data.get("choices", [])
             if not choices:
-                raise RuntimeError("No completion choices returned by IBM Granite endpoint.")
+                raise RuntimeError("No completion choices returned by Ollama endpoint.")
             content = choices[0].get("message", {}).get("content", "")
             return content.strip()
         except Exception as exc:
-            raise RuntimeError(f"Failed to parse IBM Granite response: {exc}") from exc
+            raise RuntimeError(f"Failed to parse Ollama response: {exc}") from exc
+
+
+class GroqProvider:
+    """Client for Groq Cloud API inference via OpenAI-compatible REST endpoints."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        timeout: int = 45,
+    ):
+        self.api_key = api_key or config.GROQ_API_KEY
+        self.model = model or config.GROQ_MODEL
+        self.timeout = timeout
+
+    def generate(self, messages: List[Dict[str, str]], temperature: float = 0.0) -> str:
+        """Call Groq API with chat messages list at given temperature."""
+        if not self.api_key:
+            raise ValueError(
+                "GROQ_API_KEY is not set. Please configure GROQ_API_KEY in your .env file or Streamlit secrets."
+            )
+
+        endpoint = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        payload: Dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+
+        try:
+            response = requests.post(endpoint, json=payload, headers=headers, timeout=self.timeout)
+        except requests.exceptions.Timeout as exc:
+            raise RuntimeError(
+                f"Groq endpoint timed out after {self.timeout}s at {endpoint}."
+            ) from exc
+        except requests.exceptions.RequestException as exc:
+            raise RuntimeError(
+                f"Failed to reach Groq API endpoint at {endpoint}. Error: {exc}"
+            ) from exc
+
+        if response.status_code != 200:
+            raise RuntimeError(f"Groq API returned HTTP {response.status_code}: {response.text}")
+
+        try:
+            data = response.json()
+            choices = data.get("choices", [])
+            if not choices:
+                raise RuntimeError("No completion choices returned by Groq endpoint.")
+            content = choices[0].get("message", {}).get("content", "")
+            return content.strip()
+        except Exception as exc:
+            raise RuntimeError(f"Failed to parse Groq response: {exc}") from exc

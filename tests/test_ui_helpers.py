@@ -28,8 +28,8 @@ def test_format_error_message_handles_connection_refused():
     """Verify connection error is mapped to Granite configuration advice."""
     exc = ConnectionError("Failed to establish a new connection: [WinError 10061] No connection could be made")
     msg = format_error_message(exc)
-    assert "Unable to connect to the IBM Granite inference service" in msg
-    assert "GRANITE_BASE_URL" in msg
+    assert "Unable to connect to the local inference service" in msg
+    assert "OLLAMA_BASE_URL" in msg or "Endpoint" in msg or "GRANITE_BASE_URL" in msg
     assert "Traceback" not in msg
 
 

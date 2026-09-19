@@ -23,7 +23,7 @@ class FailingLLM:
         raise AssertionError("LLM must not be called without sufficient evidence")
 
 
-class FakeGraniteLLM:
+class FakeMockLLM:
     def __init__(self, response_text):
         self.response_text = response_text
         self.called = False
@@ -85,7 +85,7 @@ def test_pipeline_generates_grounded_structured_advisory():
         ]
     }
     """
-    llm = FakeGraniteLLM(llm_json)
+    llm = FakeMockLLM(llm_json)
     result = answer_query(
         query="How to manage pod borer?",
         retriever=FakeRetriever(RetrievalResult(evidence=[evidence])),

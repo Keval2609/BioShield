@@ -14,7 +14,7 @@ Farmers transitioning toward natural/sustainable farming may need accessible, un
 
 ### Solution
 BioShield AI provides a grounded agricultural advisory workflow:
-User query → embedding → ChromaDB retrieval → evidence threshold → IBM Granite → grounded advisory → source attribution
+User query → embedding → ChromaDB retrieval → evidence threshold → LLM Inference → grounded advisory → source attribution
 
 ### Why AI?
 AI is used to:
@@ -56,8 +56,8 @@ flowchart TD
     Ret --> Gate{Sufficient Evidence?\nDistance <= Threshold}
     Gate -- No --> Fallback[Safe Fallback Response\n'No verified evidence, consult KVK']
     Gate -- Yes --> Context[Grounded Agricultural Context]
-    Context --> Granite[IBM Granite LLM\nTemperature = 0.0]
-    Granite --> Advisory[Farmer-Friendly Advisory\nIssues, Practices, Why, Precautions, Sources]
+    Context --> LLM[Local or Cloud LLM\nTemperature = 0.1]
+    LLM --> Advisory[Farmer-Friendly Advisory\nIssues, Practices, Why, Precautions, Sources]
 ```
 
 ---
@@ -68,7 +68,7 @@ flowchart TD
 - **User Interface:** Streamlit
 - **Vector Database:** ChromaDB (local persistence, no external vector cloud needed)
 - **Embedding Model:** `sentence-transformers/all-MiniLM-L6-v2`
-- **Inference LLM:** IBM Granite (via OpenAI-compatible endpoint or local Ollama)
+- **Inference LLM:** Local (Ollama) or Cloud (Groq) Provider
 - **Document Processing:** `pypdf` + custom token chunker
 - **Environment Management:** `python-dotenv`
 - **Testing:** `pytest`
@@ -120,7 +120,7 @@ BioShield/
 │   ├── chunking.py           # Section-aware and page-aware chunking
 │   ├── embeddings.py         # Sentence-transformer embedding wrapper
 │   ├── retriever.py          # Vector retrieval, scoring & evidence evaluation
-│   ├── llm.py                # IBM Granite inference client (BaseLLM, FakeLLM, GraniteLLM)
+│   ├── llm.py                # IBM Granite inference client (BaseLLM, FakeLLM, OllamaProvider, GroqProvider)
 │   ├── prompts.py            # Grounded advisory prompts with XML delimiters & schema
 │   ├── advisory_schema.py    # Structured advisory JSON schema & resilient parser
 │   ├── ui_helpers.py         # UI helper utilities, error mapping, and demo presets
@@ -135,11 +135,11 @@ BioShield/
     ├── test_ingest.py        # ChromaDB persistence & idempotency tests
     ├── test_retriever.py     # Source metadata, ranking & threshold tests
     ├── test_prompts.py       # Strict grounding rules & XML delimiter tests
-    ├── test_llm.py           # Granite LLM client interface & error handling tests
+    ├── test_llm.py           # LLM provider clients & error handling tests
     ├── test_advisory_schema.py # Structured output parsing & fallback tests
     ├── test_pipeline.py      # Evidence sufficiency & safe fallback tests
     ├── test_e2e_retrieval.py # End-to-end knowledge base retrieval tests
-    ├── test_rag_integration.py # Live ChromaDB + Granite grounded RAG integration tests
+    ├── test_rag_integration.py # Live ChromaDB + LLM grounded RAG integration tests
     ├── test_ui_helpers.py    # UI helper & human-readable error formatting tests
     └── test_app_ui.py        # Streamlit AppTest automated UI rendering & interaction tests
 ```
@@ -179,17 +179,18 @@ copy .env.example .env     # Windows
 cp .env.example .env       # Linux/macOS
 ```
 
-Edit `.env` with your IBM Granite configuration:
+Edit `.env` with your LLM configuration:
 
 ```env
-# Example using local Ollama serving Granite:
-GRANITE_MODEL=ibm/granite-3-8b-instruct
-GRANITE_BASE_URL=http://localhost:11434/v1
-GRANITE_API_KEY=not-required-for-ollama
+# Example using local Ollama:
+OLLAMA_MODEL=granite3.3:2b
+OLLAMA_BASE_URL=http://localhost:11434
 
-# Or using IBM watsonx / OpenAI-compatible endpoint:
-# GRANITE_BASE_URL=https://<your-endpoint>/v1
-# GRANITE_API_KEY=<your-api-key>
+# Or using Groq Cloud API:
+# GROQ_API_KEY=<your-api-key>
+# GROQ_MODEL=llama-3.1-8b-instant
+
+LLM_PROVIDER=ollama
 
 EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 TOP_K=4
@@ -257,7 +258,7 @@ When evidence is sufficient, the output strictly adheres to:
 }
 ```
 
-If evidence distance exceeds `SIMILARITY_THRESHOLD`, Granite is **not invoked**, immediately returning:
+If evidence distance exceeds `SIMILARITY_THRESHOLD`, the LLM is **not invoked**, immediately returning:
 ```json
 {
   "status": "INSUFFICIENT_EVIDENCE",
@@ -298,7 +299,7 @@ All 46 unit, integration, schema, and UI tests will execute across:
 - ChromaDB persistence and idempotency
 - Vector similarity scoring and evidence threshold gating
 - System prompts, grounding rules, and XML delimiter boundaries
-- IBM Granite LLM inference, timeouts, and auth headers
+- LLM provider inference, timeouts, and auth headers
 - Structured advisory JSON schema validation and resilient fallback parsing
 - Grounded RAG integration pipeline with source verification
 - UI helper functions and human-readable exception mapping
