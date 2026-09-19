@@ -180,6 +180,3 @@ def ingest_documents(
     return len(all_ids)
 
 
-if __name__ == "__main__":
-    print("=== BioShield AI Knowledge Base Ingestion ===")
-    ingest_documents()

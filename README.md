@@ -9,9 +9,22 @@
 
 ## 1. Executive Overview
 
-**BioShield AI** is an AI-powered agricultural decision-support assistant that provides farmers and agricultural students with simple, trustworthy guidance on sustainable, biological, and natural pest-management practices.
+### Problem
+Farmers transitioning toward natural/sustainable farming may need accessible, understandable information about pest management.
 
-A farmer inputs their crop, observed pest symptoms, and query. The system embeds the inquiry, retrieves relevant passages from a curated agricultural knowledge base stored in **ChromaDB**, and passes the grounded context to **IBM Granite** to synthesize a clear, safe, evidence-backed advisory.
+### Solution
+BioShield AI provides a grounded agricultural advisory workflow:
+User query → embedding → ChromaDB retrieval → evidence threshold → IBM Granite → grounded advisory → source attribution
+
+### Why AI?
+AI is used to:
+- retrieve relevant agricultural information
+- synthesize retrieved evidence
+- convert technical guidance into understandable language
+- expose uncertainty
+- provide source-linked decision support
+
+*BioShield AI does not independently discover new agricultural knowledge.*
 
 ### Key Responsible-AI Principle
 > **Zero Fabrication Policy:** If verified agricultural evidence is missing or below the similarity threshold, BioShield AI explicitly refuses to invent remedies or dosage amounts, triggering a safe fallback message instead.
@@ -62,7 +75,20 @@ flowchart TD
 
 ---
 
-## 5. Directory Structure
+## 5. Knowledge Base
+
+The knowledge base relies on 5 core natural farming sources:
+1. **Field Guide for Natural Farming**: Provides foundational principles and holistic field-level practices.
+2. **Generic Protocols for Natural Farming**: Supplies standard operational procedures and best practices for sustainable farming.
+3. **Gujarat Natural Farming Science University — Natural Farming Package of Practices**: Offers localized, scientifically-backed practices for various crops.
+4. **Pest and Disease Management in Natural Farming**: Specifically covers non-synthetic pest control methods and biological treatments.
+5. **Natural Farming Training Toolkit**: Serves as an educational resource to translate protocols into actionable advice.
+
+*(Note: Certain downloaded documents were intentionally excluded from the default corpus to avoid overlap or conflicts with natural farming approaches. The ICAR Kharif Agro-Advisories document is treated separately because it contains broader crop advisories, including conventional recommendations.)*
+
+---
+
+## 6. Directory Structure
 
 ```text
 BioShield/
@@ -120,7 +146,7 @@ BioShield/
 
 ---
 
-## 6. Getting Started
+## 7. Getting Started
 
 ### Step 1: Clone Repository & Create Virtual Environment
 
@@ -172,7 +198,7 @@ SIMILARITY_THRESHOLD=0.35
 
 ---
 
-## 7. Running the Pipeline
+## 8. Running the Pipeline
 
 ### 1. Ingest Core Documents into Knowledge Base
 
@@ -280,17 +306,46 @@ All 46 unit, integration, schema, and UI tests will execute across:
 
 ---
 
-## 8. Responsible AI & Safety Principles
+## 9. Responsible AI & Limitations
 
-1. **Evidence Grounding:** Recommendations are strictly derived from verified agricultural extension materials.
-2. **No Dosage Fabrication:** The model is prohibited from inventing chemical mixtures, drug formulas, or pesticide ratios.
-3. **Transparent Uncertainty:** The UI explicitly flags low-confidence responses and communicates evidence limitations.
-4. **Human Escalation:** Farmers are advised to consult local Krishi Vigyan Kendra (KVK) scientists or certified extension officers for unverified or severe pest damage.
-5. **Data Privacy:** No personal identifiable information (PII) or land-holding records are gathered.
+BioShield AI operates under strict AI safety and responsibility constraints:
+- **Grounding**: All recommendations must be explicitly supported by the retrieved context.
+- **Source traceability**: Advisories include exact document, page, and section citations derived from the retrieval metadata.
+- **Uncertainty**: The system transparently communicates confidence scores and limitations.
+- **Hallucination prevention**: No fabricated facts, preparation methods, or sources are permitted.
+- **Evidence threshold**: Queries with insufficient retrieved evidence trigger a safe fallback instead of speculative generation.
+- **Safe fallback**: Recommends consulting an expert when the knowledge base lacks sufficient information.
+- **No definitive diagnosis**: AI provides possibilities (e.g., "Symptoms may be consistent with..."), not absolute diagnoses.
+- **No fabricated application rates**: The system refuses to invent unverified dosages or preparation ratios.
+- **Human expert verification**: Always advises users to consult local agricultural extension officers or Krishi Vigyan Kendras (KVK).
+- **Limitations of the knowledge base**: Acknowledges that the system's answers are strictly bounded by its limited document corpus.
+
+### Limitations
+- **Limited document corpus**: The current knowledge base is a restricted prototype subset.
+- **No field validation**: The recommendations have not been systematically validated in the field.
+- **No image-based diagnosis**: The system cannot analyze photographs of crops or pests.
+- **No real-time weather information**: Recommendations do not account for current meteorological conditions.
+- **No real-time pest surveillance**: Does not integrate with live pest tracking or early warning systems.
+- **No guarantee of treatment effectiveness**: Recommendations are informational and not guaranteed to eliminate pests.
+- **Not a substitute for agricultural experts**: Designed for decision support, not autonomous intervention.
+- **Regional/crop-specific verification**: Local conditions may require verification of general natural farming practices.
 
 ---
 
-## 9. License
+## 10. Evaluation
+
+Prototype evaluation using a small manually constructed test set.
+
+| Test | Retrieval Relevant? | Grounded? | Source Correct? | Safe Behavior? | Result |
+| --- | --- | --- | --- | --- | --- |
+| 1. Supported Query | Yes | Yes | Yes | Yes | PASS |
+| 2. Crop-Specific Query | Yes | Yes | Yes | Yes | PASS |
+| 3. Unsupported Query | N/A | N/A | N/A | Yes | PASS |
+| 4. Ambiguous Symptom | Yes | Yes | Yes | Yes | PASS |
+| 5. Unsupported Dosage Request | Yes | Yes | Yes | Yes | PASS |
+
+---
+
+## 11. License
 
 Developed for the **1M1B AI for Sustainability Virtual Internship** in collaboration with **IBM SkillsBuild** and **AICTE**. Distributed under the Apache 2.0 License.
-
