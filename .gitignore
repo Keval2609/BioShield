@@ -29,6 +29,7 @@ data/processed/*
 # IDE and OS
 .vscode/
 .idea/
+.agent/
 .DS_Store
 Thumbs.db
 docs/
