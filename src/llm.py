@@ -36,7 +36,7 @@ class OllamaProvider:
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        timeout: int = 45,
+        timeout: int = 120,
     ):
         self.base_url = (base_url or config.OLLAMA_BASE_URL).rstrip("/")
         self.model = model or config.OLLAMA_MODEL

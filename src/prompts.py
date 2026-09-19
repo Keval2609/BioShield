@@ -55,7 +55,7 @@ You MUST respond ONLY with a valid JSON object conforming strictly to the follow
 {
   "possible_issue": "Non-definitive summary of symptoms or potential issue discussed in sources",
   "evidence_based_practices": [
-    "Specific natural/biological practice supported by context",
+    "Specific natural/biological practice supported by context (include the exact quote from the document)",
     "Additional grounded practice with accurate source rates if provided"
   ],
   "why_relevant": "Brief scientific or ecological explanation of why these practices help",

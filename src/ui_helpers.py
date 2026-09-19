@@ -7,17 +7,17 @@ from typing import Any, Dict, Optional, Tuple
 from src import config
 
 EXAMPLE_QUERIES: Dict[str, Dict[str, str]] = {
-    "1. Cotton: Sucking Pests (Natural Farming)": {
-        "crop": "Cotton",
-        "problem": "Small insects are appearing under the leaves.",
+    "1. Sucking Pests (Natural Farming)": {
+        "crop": "Various",
+        "problem": "Sucking pests and leaf-eating caterpillars",
         "approach": "Natural farming",
-        "question": "What sustainable pest-management practices are relevant?",
+        "question": "How to manage sucking pests and leaf-eating caterpillars using Neemastra?",
     },
-    "2. Pigeon Pea: Pod Borer Control (Natural Farming)": {
-        "crop": "Pigeon pea",
-        "problem": "Pod borer larvae entering pods and damaging flowers.",
+    "2. Seed/Soil Diseases (Natural Farming)": {
+        "crop": "Various",
+        "problem": "Seed and soil-borne diseases",
         "approach": "Natural farming",
-        "question": "What biological controls and cultural practices can prevent pod borer damage?",
+        "question": "How to treat seed and soil-borne diseases with Beejamrit?",
     },
     "3. Tomato: Chemical Schedule (Unsupported Safe Refusal)": {
         "crop": "Tomato",
