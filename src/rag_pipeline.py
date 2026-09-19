@@ -192,7 +192,7 @@ def answer_query(
 
     # Generate response via LLM with error resilience
     try:
-        raw_answer = eff_llm.generate(messages, temperature=0.1)
+        raw_answer = eff_llm.generate(messages, temperature=config.LLM_TEMPERATURE)
         advisory_obj = parse_advisory_response(raw_answer, fallback_sources=verified_sources)
         advisory_data = advisory_obj.to_dict()
         # Always enforce verified retrieval metadata for citations

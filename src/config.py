@@ -23,6 +23,7 @@ def get_config_val(key: str, default: str = "") -> str:
 
 # LLM Configuration
 LLM_PROVIDER = get_config_val("LLM_PROVIDER", "ollama").lower()
+LLM_TEMPERATURE = float(get_config_val("LLM_TEMPERATURE", "0.1"))
 
 # Local Ollama Provider
 OLLAMA_BASE_URL = get_config_val("OLLAMA_BASE_URL", "http://localhost:11434")
