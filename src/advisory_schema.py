@@ -20,6 +20,7 @@ PROTOTYPE_LIMITATION = (
 @dataclass
 class AdvisoryOutput:
     """Structured response container for grounded natural farming advisory."""
+    status: str = "SUCCESS"
     possible_issue: str = ""
     evidence_based_practices: List[str] = field(default_factory=list)
     why_relevant: str = ""
@@ -117,16 +118,14 @@ def parse_advisory_response(
             logger.warning(f"JSON parsing failed on candidate text: {err}")
 
     # Fallback heuristic parsing for plain-text or malformed responses
-    lines = [ln.strip() for ln in cleaned.splitlines() if ln.strip()]
-    possible_issue = lines[0] if lines else "Guidance based on natural farming context."
-    why_relevant = " ".join(lines[1:]) if len(lines) > 1 else cleaned
-
+    logger.warning("Falling back to INVALID_MODEL_OUTPUT due to parsing failure.")
     return AdvisoryOutput(
-        possible_issue=possible_issue,
-        evidence_based_practices=[cleaned] if cleaned else [],
-        why_relevant=why_relevant,
-        precautions=["Always observe crop response and verify with local agricultural extension."],
+        status="INVALID_MODEL_OUTPUT",
+        possible_issue="The language model output could not be parsed.",
+        evidence_based_practices=[],
+        why_relevant="The generated advisory format was invalid.",
+        precautions=["Verify recommendations with local agricultural extension officers."],
         sources=sources,
-        confidence="Medium",
+        confidence="Low",
         limitations=[PROTOTYPE_LIMITATION],
     )

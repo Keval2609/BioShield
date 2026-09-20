@@ -80,13 +80,27 @@ class RetrievalResult:
 
     def prioritized(self) -> List[Evidence]:
         """Sort evidence items giving priority to natural farming practices over conventional/IPM."""
-        return sorted(
-            self.evidence,
-            key=lambda e: (
-                0 if e.farming_approach == "natural_farming" else 1,
-                e.distance,
-            ),
-        )
+        def rank(e: Evidence) -> tuple:
+            approach_score = 0 if e.farming_approach == "natural_farming" else 1
+            
+            topic = e.topic.lower()
+            topic_score = 99
+            if "biological" in topic:
+                topic_score = 1
+            elif "cultural" in topic or "preventive" in topic:
+                topic_score = 2
+            elif "mechanical" in topic or "physical" in topic:
+                topic_score = 3
+            elif "ecological" in topic:
+                topic_score = 4
+            elif "botanical" in topic:
+                topic_score = 5
+            elif "organic" in topic or "ipm" in topic:
+                topic_score = 6
+                
+            return (approach_score, topic_score, e.distance)
+            
+        return sorted(self.evidence, key=rank)
 
     def get_sources(self, threshold: Optional[float] = None) -> List[Dict[str, Any]]:
         """Return unique source citations for the evidence."""

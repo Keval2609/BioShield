@@ -120,7 +120,7 @@ BioShield/
 │   ├── chunking.py           # Section-aware and page-aware chunking
 │   ├── embeddings.py         # Sentence-transformer embedding wrapper
 │   ├── retriever.py          # Vector retrieval, scoring & evidence evaluation
-│   ├── llm.py                # IBM Granite inference client (BaseLLM, FakeLLM, OllamaProvider, GroqProvider)
+│   ├── llm.py                # Inference clients (BaseLLM, FakeLLM, OllamaProvider, GroqProvider)
 │   ├── prompts.py            # Grounded advisory prompts with XML delimiters & schema
 │   ├── advisory_schema.py    # Structured advisory JSON schema & resilient parser
 │   ├── ui_helpers.py         # UI helper utilities, error mapping, and demo presets
@@ -280,7 +280,7 @@ The Streamlit UI features:
 - **Responsible-AI Disclaimer:** Prominently highlights that BioShield AI is a decision-support prototype and advises verification with local KVK experts for severe crop problems.
 - **3 Demo Mode Presets:** One-click buttons to populate inquiries for supported natural farming scenarios (cotton sucking pests, pigeon pea pod borer) or test safe refusal against synthetic chemical requests.
 - **Structured 4-Field Input Form:** Crop, Observed symptom/problem, Farming approach (`Natural farming`, `Organic farming`, `Sustainable/IPM`), and User Question.
-- **7-Section Advisory Presentation:** Possible Issue, Evidence-Based Practices, Why Relevant, Precautions, Sources, Confidence Badge, and Limitations.
+- **7-Section Advisory Presentation:** Possible Issue, Evidence-Based Practices, Why Relevant, Precautions, Sources, Evidence Confidence Badge, and Limitations.
 - **Expandable Retrieved Evidence:** Transparently displays retrieved document titles, page numbers, sections, text passages, and cosine distance scores.
 - **Responsible AI Sidebar:** Complete overview of safety guardrails and live ChromaDB chunk counters.
 - **Human-Friendly Error Handling:** Explains missing configurations or unreachable endpoints cleanly without dumping raw Python stack traces.
@@ -293,7 +293,7 @@ Execute the complete test suite:
 pytest -v
 ```
 
-All 46 unit, integration, schema, and UI tests will execute across:
+All 53 unit, integration, schema, and UI tests will execute across:
 - Configuration and document catalog isolation
 - PDF extraction and chunking
 - ChromaDB persistence and idempotency

@@ -52,8 +52,8 @@ def test_parse_malformed_text_response_provides_safe_fallback():
     raw_text = "Some unformatted text from model describing neem spray without valid JSON."
     fallback_sources = [{"title": "Field Guide", "page": 10, "section": "Neem"}]
     advisory = parse_advisory_response(raw_text, fallback_sources=fallback_sources)
-    assert advisory.confidence == "Medium"
-    assert "neem spray" in advisory.why_relevant or "neem spray" in advisory.possible_issue
+    assert advisory.status == "INVALID_MODEL_OUTPUT"
+    assert advisory.confidence == "Low"
     assert advisory.sources == fallback_sources
 
 

@@ -5,11 +5,12 @@ from src.retriever import Evidence
 
 
 def test_system_prompt_enforces_project_positioning_and_grounding():
-    assert "AI-powered agricultural information and decision-support prototype" in SYSTEM_PROMPT
+    assert "A. ROLE" in SYSTEM_PROMPT
     assert "not an autonomous agricultural diagnosis or treatment system" in SYSTEM_PROMPT
-    assert "Do not claim a pest/disease diagnosis with certainty" in SYSTEM_PROMPT
-    assert "application rates" in SYSTEM_PROMPT
-    assert "Natural farming" in SYSTEM_PROMPT
+    assert "E. AGRICULTURAL SAFETY RULES" in SYSTEM_PROMPT
+    assert "Never state a definitive field diagnosis" in SYSTEM_PROMPT
+    assert "G. APPLICATION-RATE RULES" in SYSTEM_PROMPT
+    assert "F. NATURAL FARMING PRIORITY" in SYSTEM_PROMPT
 
 
 def test_user_prompt_includes_xml_delimiters():

@@ -8,12 +8,25 @@ Streamlit Demonstration UI for responsible, document-grounded agricultural decis
 import streamlit as st
 
 from src import config
+from src.ingest import ingest_documents
 from src.rag_pipeline import answer_query
 from src.ui_helpers import (
     EXAMPLE_QUERIES,
     check_kb_status,
     format_error_message,
 )
+
+import sys
+
+# Auto-initialize Knowledge Base on startup if missing
+def initialize_kb_if_needed():
+    if "pytest" in sys.modules:
+        return
+    kb_available, kb_count, _ = check_kb_status()
+    if not kb_available or kb_count == 0:
+        ingest_documents()
+
+initialize_kb_if_needed()
 
 # Page configuration
 st.set_page_config(
@@ -157,11 +170,13 @@ st.markdown(
 
 st.markdown(
     "<div class='intro-box'>"
-    "BioShield AI retrieves verified natural-farming and sustainable pest-management guidance "
-    "from a curated agricultural knowledge base and uses IBM Granite to explain the evidence in simple language."
+    "BioShield AI retrieves verified agricultural evidence from a curated knowledge base and uses a configured language model to explain that evidence in simple language."
     "</div>",
     unsafe_allow_html=True,
 )
+
+if config.LLM_PROVIDER == "ollama" and "granite" in config.OLLAMA_MODEL.lower():
+    st.markdown("<div class='intro-box' style='margin-top: -15px;'><small>Powered locally by IBM Granite through Ollama.</small></div>", unsafe_allow_html=True)
 
 st.warning(
     "⚠️ **Important Disclaimer:** BioShield AI is an agricultural information and decision-support prototype, "
@@ -276,7 +291,11 @@ if submitted:
 
                 st.markdown("## 📋 Advisory Results")
 
-                if result.evidence_status == "insufficient":
+                if result.status == "LLM_ERROR":
+                    st.error("❌ The system retrieved relevant evidence, but the language model could not generate the advisory. Please retry or consult the source documents directly.")
+                elif result.status == "INVALID_MODEL_OUTPUT":
+                    st.error("❌ The language model generated an invalid response that could not be parsed. Please retry.")
+                elif result.status == "INSUFFICIENT_EVIDENCE":
                     # Safe refusal when below evidence threshold
                     st.warning("⚠️ **I could not find sufficient verified information in the current knowledge base to answer this safely.**")
                     st.info("ℹ️ **Please consult a qualified agricultural expert or local agricultural extension service.**")
@@ -325,16 +344,16 @@ if submitted:
                     else:
                         st.write("Core Natural Farming Knowledge Base.")
 
-                    # 6. Confidence
-                    st.markdown("### 6. Confidence")
+                    # 6. Evidence Confidence
+                    st.markdown("### 6. Evidence Confidence")
                     conf_val = result.get("confidence", "Medium")
                     if conf_val == "High":
-                        badge_html = "<span class='confidence-badge-high'>🟢 High Confidence</span>"
+                        badge_html = "<span class='confidence-badge-high'>🟢 High Evidence Confidence</span>"
                     elif conf_val == "Low":
-                        badge_html = "<span class='confidence-badge-low'>🔴 Low Confidence</span>"
+                        badge_html = "<span class='confidence-badge-low'>🔴 Low Evidence Confidence</span>"
                     else:
-                        badge_html = "<span class='confidence-badge-med'>🟡 Medium Confidence</span>"
-                    st.markdown(f"{badge_html} — Based on similarity score and evidence depth.", unsafe_allow_html=True)
+                        badge_html = "<span class='confidence-badge-med'>🟡 Medium Evidence Confidence</span>"
+                    st.markdown(f"{badge_html} — Based on retrieval similarity and evidence coverage; not a guarantee of correctness.", unsafe_allow_html=True)
 
                     # 7. Limitations
                     st.markdown("### 7. Limitations")

@@ -37,7 +37,7 @@ class StructuredAdvisoryResult:
 
     @property
     def evidence_status(self) -> str:
-        if self.data.get("status") == "INSUFFICIENT_EVIDENCE":
+        if self.data.get("status") in ("INSUFFICIENT_EVIDENCE", "LLM_ERROR", "INVALID_MODEL_OUTPUT"):
             return "insufficient"
         return "sufficient"
 
@@ -48,6 +48,8 @@ class StructuredAdvisoryResult:
     @property
     def answer(self) -> str:
         """Render human-friendly formatted advisory text for UI display."""
+        if self.data.get("status") == "LLM_ERROR":
+            return str(self.data.get("message", "The retrieved evidence was available, but the language model could not generate the advisory."))
         if self.evidence_status == "insufficient":
             return str(self.data.get("message", SAFE_FALLBACK))
 
@@ -210,13 +212,12 @@ def answer_query(
         logger.error(f"Inference error during IBM Granite advisory generation: {exc}")
         # Safe fallback advisory on LLM failure, preserving verified sources
         fallback_data = {
-            "possible_issue": "Retrieved agricultural guidance located, but automated synthesis encountered an error.",
-            "evidence_based_practices": [
-                f"Refer directly to {s['title']} (Page {s['page']}, Section: {s['section']})"
-                for s in verified_sources[:2]
-            ],
-            "why_relevant": "The verified documents in the knowledge base contain relevant natural farming guidance.",
-            "precautions": ["Verify recommendations with local agricultural extension officers."],
+            "status": "LLM_ERROR",
+            "message": "The retrieved evidence was available, but the language model could not generate the advisory. Please retry or consult the source documents directly.",
+            "possible_issue": "",
+            "evidence_based_practices": [],
+            "why_relevant": "",
+            "precautions": [],
             "sources": verified_sources,
             "confidence": calibrated_confidence,
             "limitations": [PROTOTYPE_LIMITATION],

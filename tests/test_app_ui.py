@@ -101,9 +101,9 @@ def test_app_ui_renders_structured_advisory_when_evidence_sufficient(mock_eviden
         assert "3. Why This May Be Relevant" in markdown_texts
         assert "4. Precautions" in markdown_texts
         assert "5. Sources" in markdown_texts
-        assert "6. Confidence" in markdown_texts
+        assert "6. Evidence Confidence" in markdown_texts
         assert "7. Limitations" in markdown_texts
-        assert "High Confidence" in markdown_texts
+        assert "High Evidence Confidence" in markdown_texts
         assert any("Retrieved Evidence" in str(e.label) for e in at.expander)
 
 
