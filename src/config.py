@@ -31,7 +31,7 @@ OLLAMA_MODEL = get_config_val("OLLAMA_MODEL", "granite3.3:2b")
 
 # Cloud Groq Provider
 GROQ_API_KEY = get_config_val("GROQ_API_KEY", "")
-GROQ_MODEL = get_config_val("GROQ_MODEL", "llama3-8b-8192")
+GROQ_MODEL = get_config_val("GROQ_MODEL", "GPT-OSS 20B")
 
 # Embeddings & Vector DB Configuration
 EMBEDDING_MODEL = get_config_val("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
