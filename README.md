@@ -4,6 +4,7 @@
 > **Primary SDG:** SDG 15 — Life on Land  
 > **Secondary SDG:** SDG 12 — Responsible Consumption and Production  
 > **Architecture:** Simple Document-Grounded RAG (Retrieval-Augmented Generation)
+> **Live Demo:** [https://bioshield-ahdf.streamlit.app/](https://bioshield-ahdf.streamlit.app/)
 
 ---
 
