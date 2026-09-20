@@ -95,6 +95,7 @@ st.markdown(
     }
     .practice-card {
         background-color: #f6fbf7;
+        color: #2c3e50;
         border-left: 4px solid #388e3c;
         border-radius: 4px;
         padding: 0.75rem 1rem;
