@@ -26,7 +26,7 @@ def initialize_kb_if_needed():
         return
     
     # Check if core PDFs exist
-    pdf_dir = config.DATA_DIR
+    pdf_dir = config.CORE_RESOURCES_DIR
     if not os.path.exists(pdf_dir) or not any(f.endswith(".pdf") for f in os.listdir(pdf_dir)):
         st.error(f"Missing core PDF documents in {pdf_dir}. Please place the required manuals before running.")
         return
