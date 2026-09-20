@@ -5,3 +5,4 @@ pypdf>=3.17.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 pytest>=8.0.0
+torchvision>=0.15.0
