@@ -16,12 +16,21 @@ from src.ui_helpers import (
     format_error_message,
 )
 
+import os
 import sys
 
 # Auto-initialize Knowledge Base on startup if missing
+@st.cache_resource
 def initialize_kb_if_needed():
     if "pytest" in sys.modules:
         return
+    
+    # Check if core PDFs exist
+    pdf_dir = config.DATA_DIR
+    if not os.path.exists(pdf_dir) or not any(f.endswith(".pdf") for f in os.listdir(pdf_dir)):
+        st.error(f"Missing core PDF documents in {pdf_dir}. Please place the required manuals before running.")
+        return
+
     kb_available, kb_count, _ = check_kb_status()
     if not kb_available or kb_count == 0:
         ingest_documents()
@@ -346,7 +355,7 @@ if submitted:
 
                     # 6. Evidence Confidence
                     st.markdown("### 6. Evidence Confidence")
-                    conf_val = result.get("confidence", "Medium")
+                    conf_val = result.get("evidence_confidence", "Medium")
                     if conf_val == "High":
                         badge_html = "<span class='confidence-badge-high'>🟢 High Evidence Confidence</span>"
                     elif conf_val == "Low":

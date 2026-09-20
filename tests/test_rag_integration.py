@@ -69,7 +69,7 @@ def test_live_chromadb_with_mock_llm_pipeline():
     assert "section" in top_source
 
     # 3. Categorical confidence
-    assert result["confidence"] in ["High", "Medium"]
+    assert result["evidence_confidence"] in ["High", "Medium"]
 
     # 4. Delimiters verified in prompt sent to LLM
     prompt_sent = mock_llm.last_messages[1]["content"]
@@ -99,6 +99,6 @@ def test_live_chromadb_insufficient_evidence_gating():
     )
 
     assert result["status"] == "INSUFFICIENT_EVIDENCE"
-    assert result["confidence"] == "Low"
+    assert result["evidence_confidence"] == "Low"
     assert result["sources"] == []
     assert result.evidence_status == "insufficient"

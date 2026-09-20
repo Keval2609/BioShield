@@ -85,8 +85,8 @@ class StructuredAdvisoryResult:
         return self.data.get("sources", [])
 
     @property
-    def confidence(self) -> str:
-        return str(self.data.get("confidence", "Medium"))
+    def evidence_confidence(self) -> str:
+        return str(self.data.get("evidence_confidence", "Medium"))
 
     def get(self, key: str, default: Any = None) -> Any:
         """Provide dict-like get method for backwards compatibility."""
@@ -172,7 +172,7 @@ def answer_query(
         search_terms.append(problem)
     search_query = f"{' '.join(search_terms)}: {query}" if search_terms else query
 
-    retrieval_result = eff_retriever.retrieve(search_query)
+    retrieval_result = eff_retriever.retrieve(search_query, preference=preference)
 
     # Threshold Check: if retrieval is insufficient, do not call Granite
     if not has_sufficient_evidence(retrieval_result, eff_threshold):
@@ -205,7 +205,7 @@ def answer_query(
         advisory_data = advisory_obj.to_dict()
         # Always enforce verified retrieval metadata for citations
         advisory_data["sources"] = verified_sources
-        advisory_data["confidence"] = calibrated_confidence
+        advisory_data["evidence_confidence"] = calibrated_confidence
         return StructuredAdvisoryResult(advisory_data, retrieved_evidence=filtered_evidence)
 
     except Exception as exc:
@@ -219,7 +219,7 @@ def answer_query(
             "why_relevant": "",
             "precautions": [],
             "sources": verified_sources,
-            "confidence": calibrated_confidence,
+            "evidence_confidence": calibrated_confidence,
             "limitations": [PROTOTYPE_LIMITATION],
         }
         return StructuredAdvisoryResult(fallback_data, retrieved_evidence=filtered_evidence)

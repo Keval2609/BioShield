@@ -76,7 +76,7 @@ def test_app_ui_renders_structured_advisory_when_evidence_sufficient(mock_eviden
         "sources": [
             {"title": "Field_Guide_for_Natural_Farming.pdf", "page": 14, "section": "Botanical Preparations"}
         ],
-        "confidence": "High",
+        "evidence_confidence": "High",
         "limitations": "Prototype decision-support advisory. Verify with local KVK experts.",
     }
     mock_result = StructuredAdvisoryResult(mock_result_data, retrieved_evidence=mock_evidence)
@@ -113,7 +113,7 @@ def test_app_ui_renders_insufficient_evidence_safe_fallback():
         "status": "INSUFFICIENT_EVIDENCE",
         "message": "I could not find sufficient verified information in the current knowledge base to answer this safely.",
         "sources": [],
-        "confidence": "Low",
+        "evidence_confidence": "Low",
     }
     mock_result = StructuredAdvisoryResult(mock_insufficient_data, retrieved_evidence=[])
 

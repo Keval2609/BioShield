@@ -10,7 +10,7 @@ class FakeRetriever:
     def __init__(self, result):
         self.result = result
 
-    def retrieve(self, query, top_k=None):
+    def retrieve(self, query: str, top_k: int = 5, preference: str = "") -> Any:
         return self.result
 
 
@@ -43,7 +43,7 @@ def test_pipeline_returns_insufficient_evidence_when_below_threshold():
     )
 
     assert result["status"] == "INSUFFICIENT_EVIDENCE"
-    assert result["confidence"] == "Low"
+    assert result["evidence_confidence"] == "Low"
     assert result["sources"] == []
     assert "sufficient verified information" in result["message"]
     assert result.evidence_status == "insufficient"
@@ -79,7 +79,7 @@ def test_pipeline_generates_grounded_structured_advisory():
                 "section": "Invented"
             }
         ],
-        "confidence": "High",
+        "evidence_confidence": "High",
         "limitations": [
             "BioShield AI is a prototype decision-support tool."
         ]
@@ -96,7 +96,7 @@ def test_pipeline_generates_grounded_structured_advisory():
     assert llm.called
     assert result["possible_issue"] == "The symptoms may be consistent with pod borer damage."
     assert "5% Neem Seed Kernel Extract (NSKE)" in result["evidence_based_practices"][0]
-    assert result["confidence"] in ["High", "Medium"]
+    assert result["evidence_confidence"] in ["High", "Medium"]
     assert len(result["precautions"]) >= 1
 
     # Verified sources from retrieval metadata must be used
@@ -136,5 +136,5 @@ def test_pipeline_handles_llm_runtime_error_gracefully():
 
     # Must not crash, should return structured safe fallback
     assert "possible_issue" in result or "message" in result
-    assert result["confidence"] in ["Medium", "Low"]
+    assert result["evidence_confidence"] in ["Medium", "Low"]
     assert len(result["sources"]) >= 1

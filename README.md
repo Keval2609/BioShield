@@ -311,6 +311,9 @@ All 53 unit, integration, schema, and UI tests will execute across:
 
 BioShield AI operates under strict AI safety and responsibility constraints:
 - **Grounding**: All recommendations must be explicitly supported by the retrieved context.
+- **Strict Evidence Boundaries**: Python determines `evidence_confidence` and prevents the LLM from fabricating citations or quantities.
+- **Fail-Safe Parser**: Markdown fences are stripped; malformed JSON instantly triggers a safe refusal state.
+- **4 Explicit States**: `SUCCESS`, `INSUFFICIENT_EVIDENCE`, `LLM_ERROR`, `INVALID_MODEL_OUTPUT`.
 - **Source traceability**: Advisories include exact document, page, and section citations derived from the retrieval metadata.
 - **Uncertainty**: The system transparently communicates confidence scores and limitations.
 - **Hallucination prevention**: No fabricated facts, preparation methods, or sources are permitted.

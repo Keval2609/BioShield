@@ -162,7 +162,7 @@ class ChromaRetriever:
                 return None
         return self._collection
 
-    def retrieve(self, query: str, top_k: Optional[int] = None) -> RetrievalResult:
+    def retrieve(self, query: str, top_k: Optional[int] = None, preference: str = "") -> RetrievalResult:
         """Embed the query and retrieve top_k evidence items from ChromaDB."""
         k = top_k if top_k is not None else config.TOP_K
         collection = self._get_collection()
@@ -186,7 +186,14 @@ class ChromaRetriever:
             for i, doc in enumerate(docs):
                 meta = metas[i] if i < len(metas) and metas[i] is not None else {}
                 dist = dists[i] if i < len(dists) and dists[i] is not None else 0.0
-                evidence_items.append(Evidence(text=doc, metadata=meta, distance=dist))
+                
+                ev = Evidence(text=doc, metadata=meta, distance=dist)
+                
+                # Strict scope filtering: prevent conventional evidence from becoming natural-farming advice
+                if preference.lower() != "conventional" and ev.farming_approach != "natural_farming":
+                    continue
+                    
+                evidence_items.append(ev)
 
         # Prioritize natural farming evidence
         result = RetrievalResult(evidence=evidence_items)

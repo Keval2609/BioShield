@@ -47,19 +47,16 @@ You MUST respond ONLY with a valid JSON object strictly matching this schema:
 {
   "possible_issue": "Non-definitive summary of symptoms or potential issue discussed in sources. Use cautious language.",
   "evidence_based_practices": [
-    "Specific natural/biological practice supported by context (include the exact quote/rate if provided in the document)"
+    "Specific natural/biological practice supported by context (Summarize the retrieved evidence accurately in your own words. Do not introduce information that is absent from the retrieved context. Do not invent exact rates or quantities.)"
   ],
   "why_relevant": "Brief explanation of why these practices help based on context.",
   "precautions": [
     "Safety, preparation, or timing precaution stated in the source."
   ],
-  "sources": [],
-  "confidence": "Medium",
   "limitations": [
     "Reminder that BioShield AI is a prototype decision-support tool and not a definitive diagnosis."
   ]
 }
-Note: The 'sources' and 'confidence' fields will be overwritten by the application layer.
 
 K. FINAL VALIDATION INSTRUCTION
 Verify that every practice and precaution you included is explicitly present in the provided context. If not, remove it.

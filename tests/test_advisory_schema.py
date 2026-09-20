@@ -23,11 +23,11 @@ def test_parse_valid_json_response():
     }
     """
     advisory = parse_advisory_response(raw_json)
-    assert advisory.confidence == "High"
+    assert advisory.evidence_confidence == "Medium"
     assert len(advisory.evidence_based_practices) == 2
     assert "gram pod borer" in advisory.possible_issue
-    assert advisory.sources[0]["title"] == "Field Guide"
-    assert advisory.to_dict()["confidence"] == "High"
+    assert advisory.sources == []
+    assert advisory.to_dict()["evidence_confidence"] == "Medium"
 
 
 def test_parse_markdown_fenced_json_response():
@@ -44,7 +44,7 @@ def test_parse_markdown_fenced_json_response():
     ```"""
     advisory = parse_advisory_response(raw_markdown)
     assert advisory.possible_issue == "Symptoms may indicate aphid infestation."
-    assert advisory.confidence == "Medium"
+    assert advisory.evidence_confidence == "Medium"
     assert advisory.evidence_based_practices == ["Spray Dashaparni ark"]
 
 
@@ -53,7 +53,7 @@ def test_parse_malformed_text_response_provides_safe_fallback():
     fallback_sources = [{"title": "Field Guide", "page": 10, "section": "Neem"}]
     advisory = parse_advisory_response(raw_text, fallback_sources=fallback_sources)
     assert advisory.status == "INVALID_MODEL_OUTPUT"
-    assert advisory.confidence == "Low"
+    assert advisory.evidence_confidence == "Low"
     assert advisory.sources == fallback_sources
 
 
@@ -62,5 +62,5 @@ def test_insufficient_evidence_output_structure():
     d = insuf.to_dict()
     assert d["status"] == "INSUFFICIENT_EVIDENCE"
     assert "sufficient verified information" in d["message"]
-    assert d["confidence"] == "Low"
+    assert d["evidence_confidence"] == "Low"
     assert d["sources"] == []

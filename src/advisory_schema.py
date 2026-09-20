@@ -26,7 +26,7 @@ class AdvisoryOutput:
     why_relevant: str = ""
     precautions: List[str] = field(default_factory=list)
     sources: List[Dict[str, Any]] = field(default_factory=list)
-    confidence: str = "Medium"
+    evidence_confidence: str = "Medium"
     limitations: List[str] = field(default_factory=lambda: [PROTOTYPE_LIMITATION])
 
     def to_dict(self) -> Dict[str, Any]:
@@ -46,7 +46,7 @@ class InsufficientEvidenceOutput:
         "Please consult a qualified agricultural expert or local extension service."
     )
     sources: List[Dict[str, Any]] = field(default_factory=list)
-    confidence: str = "Low"
+    evidence_confidence: str = "Low"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert insufficient evidence response to dictionary."""
@@ -69,7 +69,7 @@ def parse_advisory_response(
 ) -> AdvisoryOutput:
     """Parse raw LLM output into validated AdvisoryOutput object with error resilience.
     
-    Attempts JSON parsing first, falling back to heuristic section extraction if needed.
+    Attempts JSON parsing and immediately fails to INVALID_MODEL_OUTPUT on any error.
     """
     cleaned = strip_markdown_fences(raw_text)
     sources = fallback_sources or []
@@ -97,27 +97,19 @@ def parse_advisory_response(
                 if isinstance(limitations, str):
                     limitations = [limitations]
 
-                conf = str(data.get("confidence", "Medium")).strip().capitalize()
-                if conf not in VALID_CONFIDENCE_LEVELS:
-                    conf = "Medium"
-
-                parsed_sources = data.get("sources")
-                if not parsed_sources or not isinstance(parsed_sources, list):
-                    parsed_sources = sources
-
                 return AdvisoryOutput(
                     possible_issue=str(data.get("possible_issue", "")).strip(),
                     evidence_based_practices=[str(p).strip() for p in practices if str(p).strip()],
                     why_relevant=str(data.get("why_relevant", data.get("why", ""))).strip(),
                     precautions=[str(pr).strip() for pr in precautions if str(pr).strip()],
-                    sources=parsed_sources,
-                    confidence=conf,
+                    sources=sources,
+                    evidence_confidence="Medium",  # To be overridden by python logic
                     limitations=[str(lim).strip() for lim in limitations if str(lim).strip()],
                 )
         except Exception as err:
             logger.warning(f"JSON parsing failed on candidate text: {err}")
 
-    # Fallback heuristic parsing for plain-text or malformed responses
+    # Fallback to INVALID_MODEL_OUTPUT immediately on parsing failure
     logger.warning("Falling back to INVALID_MODEL_OUTPUT due to parsing failure.")
     return AdvisoryOutput(
         status="INVALID_MODEL_OUTPUT",
@@ -126,6 +118,6 @@ def parse_advisory_response(
         why_relevant="The generated advisory format was invalid.",
         precautions=["Verify recommendations with local agricultural extension officers."],
         sources=sources,
-        confidence="Low",
+        evidence_confidence="Low",
         limitations=[PROTOTYPE_LIMITATION],
     )
